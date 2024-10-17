@@ -2,9 +2,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, TypeVar, Union
 
+import pandas as pd
+import pandera as pa
 from dagster import Config
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
+from pandera.typing import Series
 from pydantic import BaseModel, Field, conlist, validator
 
 Point = tuple[float, float]
@@ -61,6 +64,25 @@ class S2BandsEnum(str, Enum):
     B10 = "B10"
     B11 = "B11"
     B12 = "B12"
+
+
+S2_BAND_RESOLUTION = {
+    "B02": "10m",
+    "B03": "10m",
+    "B04": "10m",
+    "B08": "10m",
+    "B05": "20m",
+    "B06": "20m",
+    "B07": "20m",
+    "B8A": "20m",
+    "B11": "20m",
+    "B12": "20m",
+    "B01": "60m",
+    "B09": "60m",
+    "B10": "60m",
+}
+
+S2_BUCKET = "gcp-public-data-sentinel-2"
 
 
 class ConstellationEnum(str, Enum):
@@ -141,3 +163,35 @@ class DataSpec(Config):
 class Tile(BaseModel):
     tile: str
     geometry: Optional[Geometry]
+
+
+class S2IndexDF(pa.DataFrameModel):
+    """Granule index in BigQuery."""
+
+    granule_id: Series[str] = pa.Field(description="ID of the image")
+    product_id: Series[str] = pa.Field(description="ID of the sensor and product")
+    datatake_identifier: Series[str] = pa.Field(description="ID of the datatake")
+    mgrs_tile: Series[str] = pa.Field(description="key for the UTM MGRS tile")
+    sensing_time: Series[pd.DatetimeTZDtype(unit="us", tz="utc")] = (  # noqa: F821
+        pa.Field(description="timestamp of the image")
+    )
+    base_url: Series[str] = pa.Field(
+        description="GCS url of the granule", nullable=True
+    )
+    source_url: Series[str] = pa.Field(
+        description="GCS URL of the granule source", nullable=True
+    )
+    total_size: Series[int] = pa.Field(description="Total size in bytes of the granule")
+    cloud_cover: Series[float] = pa.Field(
+        description="Cloud cover percentage out of 100"
+    )
+
+    # additional columns:
+    # geometric_quality_flag
+    # generation_time
+    # north_lat
+    # south_lat
+    # west_lon
+    # east_lon
+    # source_url
+    # etl_timestamp
