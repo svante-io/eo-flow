@@ -27,6 +27,7 @@ classifiers = [  # Optional
 dependencies = [
     "pydantic",
     "numpy",
+    "db-dtypes",
     # svante-auth
 ]
 
@@ -36,16 +37,21 @@ dev = [
     "dagster",
     "pre-commit",
     "geopandas",
-    "dagster-webserver"
+    "dagster-webserver",
+    "dagster-pandera"
 ]
 
 # core = [
 #
 # ]
 
-# full = [
-#     "eo-flow[core,gcp]",
-# ]
+gcp = [
+    "google-cloud-bigquery"
+]
+
+full = [
+    "eo-flow[dev,gcp]",
+]
 
 [project.urls]  # Optional
 "Source" = "https://github.com/svante-io/eo-flow"
