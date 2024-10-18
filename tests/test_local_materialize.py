@@ -1,10 +1,10 @@
 from dagster import RunConfig
 
-from eoflow.dag.materialise import materialise_local
+from eoflow.dag.materialize import materialize_local
 from eoflow.models import DataSpec
 
 
-def test_materialise_local():
+def test_materialize_local():
 
     dataspec = DataSpec(
         target_geofile="tests/data/aoi.geojson",
@@ -15,4 +15,4 @@ def test_materialise_local():
         "dynamic_revisits": dataspec,
     }
 
-    assert materialise_local.execute_in_process(run_config=RunConfig(run_cfg)).success
+    assert materialize_local.execute_in_process(run_config=RunConfig(run_cfg)).success

@@ -1,7 +1,7 @@
 from dagster import Definitions
 
-from eoflow.dag.materialise import materialise_local
+from eoflow.dag.materialize import materialize_local
 
 defs = Definitions(
-    jobs=[materialise_local],
+    jobs=[materialize_local],
 )
