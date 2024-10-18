@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from functools import cached_property
 from typing import Optional, TypeVar, Union
 
 import pandas as pd
@@ -7,8 +8,10 @@ import pandera as pa
 from dagster import Config
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
+from mgrs import MGRS
 from pandera.typing import Series
-from pydantic import BaseModel, Field, conlist, validator
+from pydantic import BaseModel, Field, computed_field, conlist, validator
+from shapely import geometry as shapely_geometry
 
 Point = tuple[float, float]
 LinearRing = conlist(Point, min_length=4)
@@ -34,6 +37,9 @@ class Geometry(BaseModel):
 
     def get(self, attr):
         return getattr(self, attr)
+
+    def to_shapely(self):
+        return shapely_geometry.shape(self.dict())
 
 
 class CloudMaskEnum(str, Enum):
@@ -162,7 +168,52 @@ class DataSpec(Config):
 
 class Tile(BaseModel):
     tile: str
-    geometry: Optional[Geometry]
+
+    @computed_field(return_type=Geometry)
+    @cached_property
+    def geometry(self):
+        utm_tile = MGRS().MGRSToUTM(self.tile)
+        return Geometry(
+            type="Polygon",
+            coordinates=[
+                [
+                    [utm_tile[2], utm_tile[3] + 100020],
+                    [utm_tile[2] + 109800, utm_tile[3] + 100020],
+                    [utm_tile[2] + 109800, utm_tile[3] - 9780],
+                    [utm_tile[2], utm_tile[3] - 9780],
+                    [utm_tile[2], utm_tile[3] + 100020],
+                ]
+            ],
+        )
+
+    @computed_field(return_type=str)
+    @cached_property
+    def utm_crs(self):
+        utm_tile = MGRS().MGRSToUTM(self.tile)
+        if utm_tile[1] == "N":
+            return "EPSG:326" + str(utm_tile[0])
+        else:  # S
+            return "EPSG:327" + str(utm_tile[0])
+
+    @computed_field(return_type=Geometry)
+    @cached_property
+    def utm_top_left(self):
+        utm_tile = MGRS().MGRSToUTM(self.tile)
+        return Geometry(type="Point", cooordinates=[utm_tile[2], utm_tile[3] - 980])
+
+
+class S2IndexItem(BaseModel):
+    """Single granule index in BigQuery."""
+
+    granule_id: str
+    product_id: str
+    datatake_identifier: str
+    mgrs_tile: str
+    sensing_time: datetime
+    base_url: Optional[str]
+    source_url: Optional[str]
+    total_size: int
+    cloud_cover: float
 
 
 class S2IndexDF(pa.DataFrameModel):
@@ -195,3 +246,6 @@ class S2IndexDF(pa.DataFrameModel):
     # east_lon
     # source_url
     # etl_timestamp
+
+    def to_pydantic(self):
+        return [S2IndexItem(**item) for item in self.to_dict(orient="records")]

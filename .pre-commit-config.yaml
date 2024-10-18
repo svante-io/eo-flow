@@ -37,6 +37,7 @@ repos:
   - id: isort
     args:
     - --honor-noqa
+    - --profile=black
 
 - repo: https://github.com/psf/black
   rev: 24.10.0

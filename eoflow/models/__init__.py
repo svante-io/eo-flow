@@ -1,3 +1,3 @@
-from eoflow.models.models import DataSpec, S2IndexDF, Tile
+from eoflow.models.models import DataSpec, S2IndexDF, S2IndexItem, Tile
 
-__all__ = ["DataSpec", "Tile", "S2IndexDF"]
+__all__ = ["DataSpec", "Tile", "S2IndexDF", "S2IndexItem"]
