@@ -21,25 +21,30 @@ def dynamic_revisits(tiles: list[Tile], config: DataSpec):
 
 
 @op(ins={"df_revisit_slice": In(DagsterS2IndexDF)}, out=Out())
-def materialise_tile(df_revisit_slice: S2IndexDF, config: DataSpec):
-    # do the fun stuff here
-    # create archives {resolution: {revisit,band, x, y}}
-    # retreive granules, upsampling
-    # apply masks (cloud, target/aoi) and compositing
-    # create chips and write to storage
-    # create targets/masks and write to storage
-    # create any other artefact and metadata
-    pass
+def op_materialize_tile_run_job(df_revisit_slice: S2IndexDF, config: DataSpec):
+    """Deploy cloud run jobs to materialise the dataset."""
+
+
+@op(ins={"df_revisit_slice": In(DagsterS2IndexDF)}, out=Out())
+def op_materialize_tile(df_revisit_slice: S2IndexDF, config: DataSpec):
+    """Deploy cloud run jobs to materialise the dataset."""
 
 
 @graph
-def materialise_dataset():
+def materialize_dataset():
     tiles = get_tiles_op()
     revisits = dynamic_revisits(tiles)
-    revisits.map(materialise_tile)
+    revisits.map(op_materialize_tile_run_job)
 
 
-materialise_local = materialise_dataset.to_job(
-    name="materialise_dataset_locally",
-    description="Materialise dataset locally for development and testing",
+@graph
+def materialize_dataset_local():
+    tiles = get_tiles_op()
+    revisits = dynamic_revisits(tiles)
+    revisits.map(op_materialize_tile)
+
+
+materialize_local = materialize_dataset_local.to_job(
+    name="materialize_dataset_locally",
+    description="Materialize dataset locally for development and testing",
 )
