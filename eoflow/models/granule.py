@@ -69,30 +69,30 @@ class GCPS2Granule:
         self.upsample = upsample
         self.band_urls = make_band_urls(mgrs_tile, product_id, granule_id)
 
-        self._build_stack()
+        self._build_delayed_stack()
 
-    def _build_stack(self):
+    def _read_one_band(self, block_id):
+        """read a single band from the granule."""
 
-        def read_one_band(block_id):
-            """read a single band from the granule."""
+        AXIS = 0
 
-            AXIS = 0
+        band_url = self.band_urls[self.bands[block_id[AXIS]]]
 
-            band_url = self.band_urls[self.bands[block_id[AXIS]]]
+        buffer = download_blob(S2_BUCKET, band_url)
 
-            buffer = download_blob(S2_BUCKET, band_url)
+        arr = np.array(Image.open(BytesIO(buffer)))
 
-            arr = np.array(Image.open(BytesIO(buffer)))
+        if S2_BAND_RESOLUTION[self.bands[block_id[AXIS]]] == "20m":
+            arr = imresize(arr, 2, kernel=self.upsample)
+        if S2_BAND_RESOLUTION[self.bands[block_id[AXIS]]] == "60m":
+            arr = imresize(arr, 6, kernel=self.upsample)
 
-            if S2_BAND_RESOLUTION[self.bands[block_id[AXIS]]] == "20m":
-                arr = imresize(arr, 2, kernel=self.upsample)
-            if S2_BAND_RESOLUTION[self.bands[block_id[AXIS]]] == "60m":
-                arr = imresize(arr, 6, kernel=self.upsample)
+        return np.expand_dims(arr, AXIS)
 
-            return np.expand_dims(arr, AXIS)
+    def _build_delayed_stack(self):
 
         self.stack = da.map_blocks(
-            read_one_band,
+            self._read_one_band,
             dtype=np.uint16,
             chunks=((1,) * len(self.bands), 10980, 10980),
         )

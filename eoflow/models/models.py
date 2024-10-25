@@ -10,8 +10,17 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from mgrs import MGRS
 from pandera.typing import Series
-from pydantic import BaseModel, Field, computed_field, conlist, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    conlist,
+    field_validator,
+)
+from pyproj import CRS, Transformer
 from shapely import geometry as shapely_geometry
+from shapely.ops import transform
 
 Point = tuple[float, float]
 LinearRing = conlist(Point, min_length=4)
@@ -30,16 +39,23 @@ VALID_GEOM_TYPES = [
 
 
 class Geometry(BaseModel):
-    type: str = Field(..., example="Polygon")
-    coordinates: Union[PolygonCoords, MultiPolygonCoords, Point] = Field(
-        ..., example=[[[1, 3], [2, 2], [4, 4], [1, 3]]]
+    type: str = Field(...)
+    coordinates: Union[PolygonCoords, MultiPolygonCoords, Point] = Field(...)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"type": "Polygon"},
+                {"coordinates": [[[1, 3], [2, 2], [4, 4], [1, 3]]]},
+            ]
+        }
     )
 
     def get(self, attr):
         return getattr(self, attr)
 
     def to_shapely(self):
-        return shapely_geometry.shape(self.dict())
+        return shapely_geometry.shape(self.model_dump())
 
 
 class CloudMaskEnum(str, Enum):
@@ -118,6 +134,7 @@ class LoaderOuputEnum(str, Enum):
 class DataSpec(Config):
     target_geofile: str
     aoi_geofile: Optional[str]
+    dataset_store: str
     start_datetime: Optional[str] = Field(
         ..., example=(datetime.now() - relativedelta(months=1)).isoformat()[0:10]
     )
@@ -133,7 +150,7 @@ class DataSpec(Config):
     clip: conlist(int, min_length=2, max_length=2) = [0, 4000]
     rescale: conlist(float, min_length=2, max_length=2) = [0, 1]
 
-    @validator("upsample")
+    @field_validator("upsample")
     def upsample_none(cls, v, values):
         # validate upsample can't be none if np.ndarray or xarray
         if (
@@ -145,7 +162,7 @@ class DataSpec(Config):
             )
         return v
 
-    @validator("start_datetime")
+    @field_validator("start_datetime")
     def start_datetime_default_1m(cls, v, values):
         if v is None:
             # default start_datetime to 1 month ago
@@ -155,7 +172,7 @@ class DataSpec(Config):
             parse(v)
             return v
 
-    @validator("end_datetime")
+    @field_validator("end_datetime")
     def end_datetime_default_now(cls, v, values):
         if v is None:
             # default end_datetime to now
@@ -171,7 +188,7 @@ class Tile(BaseModel):
 
     @computed_field(return_type=Geometry)
     @cached_property
-    def geometry(self):
+    def geometry_utm(self):
         utm_tile = MGRS().MGRSToUTM(self.tile)
         return Geometry(
             type="Polygon",
@@ -186,6 +203,19 @@ class Tile(BaseModel):
             ],
         )
 
+    @computed_field(return_type=Geometry)
+    @cached_property
+    def geometry(self):
+        utm_crs = CRS(self.utm_crs)
+        wgs_crs = CRS("EPSG:4326")
+
+        reproject = Transformer.from_crs(utm_crs, wgs_crs, always_xy=True).transform
+        return Geometry(
+            **shapely_geometry.mapping(
+                transform(reproject, self.geometry_utm.to_shapely())
+            )
+        )
+
     @computed_field(return_type=str)
     @cached_property
     def utm_crs(self):
@@ -195,11 +225,19 @@ class Tile(BaseModel):
         else:  # S
             return "EPSG:327" + str(utm_tile[0])
 
+    @computed_field(return_type=str)
+    @cached_property
+    def utm_crs_raw(self):
+        if "326" in self.utm_crs:
+            return "N" + self.utm_crs[-2:]
+        else:
+            return "S" + self.utm_crs[-2:]
+
     @computed_field(return_type=Geometry)
     @cached_property
     def utm_top_left(self):
         utm_tile = MGRS().MGRSToUTM(self.tile)
-        return Geometry(type="Point", cooordinates=[utm_tile[2], utm_tile[3] - 980])
+        return Geometry(type="Point", coordinates=[utm_tile[2], utm_tile[3] - 980])
 
 
 class S2IndexItem(BaseModel):
@@ -214,6 +252,12 @@ class S2IndexItem(BaseModel):
     source_url: Optional[str]
     total_size: int
     cloud_cover: float
+
+    @field_validator("sensing_time", mode="before")
+    def parse_sensing_time(cls, v):
+        if isinstance(v, str):
+            return parse(v)
+        return v
 
 
 class S2IndexDF(pa.DataFrameModel):
