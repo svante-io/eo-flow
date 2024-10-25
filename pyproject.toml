@@ -39,7 +39,10 @@ dev = [
     "pre-commit",
     "geopandas",
     "dagster-webserver",
-    "dagster-pandera"
+    "dagster-pandera",
+    "pytest-ordering",
+    "sentinelhub",
+    "zarr",
 ]
 
 # core = [
