@@ -1,8 +1,10 @@
 import pytest
+import zarr
 
 from eoflow.models import Archive
 
 
+@pytest.mark.order(1)
 def test_archive_construction(
     sample_dataspec, sample_archive_tile, sample_archive_revisits
 ):
@@ -19,9 +21,52 @@ def test_archive_construction(
 
     archive.fill()
 
+    assert True
 
-@pytest.mark.skip(reason="expensive test, only run when necessary")
-def test_archive_mask_and_composite():
+
+@pytest.mark.order(2)
+def test_archive_mask_and_composite(
+    sample_dataspec, sample_archive_tile, sample_archive_revisits
+):
     """
-    Test the archive mask and composite operations, monkeypatch loading the data stack
+    Test the archive mask and composite operations,
     """
+
+    archive = Archive(
+        cfg=sample_dataspec,
+        tile=sample_archive_tile,
+        revisits=sample_archive_revisits,
+    )
+
+    # pseudo-monkey patch, assume the existance of the archive from the test above.
+    archive.z = zarr.open("./local.zarr", "r+")
+
+    archive.mask()
+
+    archive.composite()
+
+    assert True
+
+
+@pytest.mark.order(3)
+def test_archive_store_chips_and_targets(
+    sample_dataspec, sample_archive_tile, sample_archive_revisits
+):
+    """
+    Test the archive mask and composite operations,
+    """
+
+    archive = Archive(
+        cfg=sample_dataspec,
+        tile=sample_archive_tile,
+        revisits=sample_archive_revisits,
+    )
+
+    # pseudo-monkey patch, assume the existance of the archive from the test above.
+    archive.z = zarr.open("./local.zarr", "r+")
+
+    archive.mask()
+
+    archive.materialize_archive()
+
+    assert True
