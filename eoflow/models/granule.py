@@ -6,8 +6,8 @@ import dask.array as da
 import numpy as np
 from PIL import Image
 
-from eoflow.lib.gcp import download_blob
-from eoflow.lib.resize import imresize
+from eoflow.cloud.gcp import download_blob
+from eoflow.core.resize import imresize
 from eoflow.models.models import (
     S2_BAND_RESOLUTION,
     S2_BUCKET,

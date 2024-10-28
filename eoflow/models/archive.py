@@ -1,4 +1,5 @@
 from typing import Optional
+from itertools import chain
 
 import dask
 import dask.array as da
@@ -9,9 +10,38 @@ from cloudpathlib import AnyPath
 from rasterio import Affine, features
 from sentinelhub import CRS, UtmZoneSplitter
 from xarray import DataArray as xda
+from pydantic import BaseModel
 
 from eoflow.models.granule import GCPS2Granule
 from eoflow.models.models import DataSpec, S2IndexItem, Tile
+
+class ChipStats(BaseModel):
+    mean: list[float]
+    std: list[float]
+
+class Indexbase(BaseModel):
+    tile: str
+    chip_ii: int
+    chip_idx: str
+
+class ChipIndex(Indexbase):
+    chip_path: str
+    chip_stats: ChipStats
+
+class TargetIndex(Indexbase):
+    target_path: str
+    target_pxcount: dict[int,int]
+
+class ChipMetaData(ChipIndex, TargetIndex):
+    pass
+
+class ArchiveIndex(BaseModel):
+    tile: str
+    chips: list[ChipMetaData]
+
+class DataSetIndex(BaseModel):
+    chips: list[ChipMetaData]
+    chip_stats: ChipStats
 
 
 class Archive:
@@ -110,23 +140,12 @@ class Archive:
         """execute the dask-delayed computation to mask, fill, and composite."""
 
         self.z = zarr.open(
-            "./local.zarr",
+            f"./local-{self.tile.tile}.zarr",
             mode="w",
             shape=(len(self.revisits), len(self.cfg.bands), 10980, 10980),
             chunks=(1, 1, self.cfg.chipsize, self.cfg.chipsize),
             dtype="uint16",
         )
-
-        # delayed_jobs = []
-        # for ii, granule in enumerate(self.granules):
-        #     delayed_jobs.append(
-        #         granule.stack.store(
-        #             z,
-        #             regions=(ii, slice(None), slice(None), slice(None)),
-        #             compute=False,
-        #             return_stored=False
-        #         )
-        #     )
 
         stack = da.stack([g.stack for g in self.granules], axis=0)
 
@@ -304,12 +323,29 @@ class Archive:
         chip_data = self._composite_chip(chip=chip)
         pth = AnyPath(f"{self.cfg.dataset_store}/chips/{self.tile.tile}-{ii}.npz")
         np.savez(pth, chip_data)
+        return ChipIndex({
+            "tile":self.tile.tile,
+            "chip_ii":ii,
+            "chip_idx": self.tile.tile + f"-{ii}",
+            "chip_path":str(pth),
+            "chip_stats":{
+                'mean':np.nanmean(chip_data,axis=(1,2)).tolist(),
+                'std':np.nanstd(chip_data, axis=(1,2)).tolist()
+            }
+        })
 
     def _store_target(self, ii: int, chip):
         """store the target data"""
         target_img = self._burn_target(chip)
         pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npz")
         np.savez(pth, target_img)
+        return TargetIndex({
+            "tile":self.tile.tile,
+            "chip_ii":ii,
+            "chip_idx": self.tile.tile + f"-{ii}",
+            "target_path":str(pth),
+            "target_pxcount": dict(zip(val.tolist(), counts.tolist()))
+        })
 
     def store_chips_eager(self):
         """store the composite chips"""
@@ -336,7 +372,18 @@ class Archive:
         for ii, (_idx, chip) in enumerate(self.chips.iterrows()):
             yield dask.delayed(self._store_target)(ii, chip)
 
-    def materialize_archive(self):
+    def _merge_indices(self, chip_indices: list[ChipIndex], target_indices: list[TargetIndex]) -> ArchiveIndex:
+        chip_index = {c.chip_idx:c for c in chip_indices}
+        target_index = {t.chip_idx:t for t in chip_indices}
+
+        chip_data = [ChipMetaData(chip_index[k].model_dump().update(target_index[k].model_dump())) for k in chip_index.keys()]
+
+        return ArchiveIndex(
+            tile=self.tile.tile,
+            chip_data=chip_data
+        )
+
+    def materialize(self):
         """materialize the archive data"""
 
         self.prep_archive_paths()
@@ -344,4 +391,31 @@ class Archive:
         store_chip_futures = [fn for fn in self.store_chips()]
         store_target_futures = [fn for fn in self.store_targets()]
 
-        dask.compute(store_chip_futures + store_target_futures, num_workers=6)  # fast!
+        chip_indices = dask.compute(store_chip_futures, num_workers=2)  # fast!
+        target_indices = dask.compute(store_target_futures, num_workers=2)
+
+        return self._merge_indices(chip_indices, target_indices)
+
+    @classmethod
+    def merge_archive_indices(cls, indices: list[ArchiveIndex]):
+        return DataSetIndex(
+            chips= list(chain.from_iterable([idx.chips for idx in indices])),
+            chip_stats = {
+                'mean':np.nanmean(
+                        np.array([chip.chip_stats.mean for chip in 
+                            list(chain.from_iterable([idx.chips for idx in indices]))]
+                        )
+                        , axis=1
+                    ).tolist(),
+                'std':np.nanmean(
+                    np.array([chip.chip_stats.std for chip in 
+                        list(chain.from_iterable([idx.chips for idx in indices]))]
+                    )
+                    , axis=1
+                )
+            }
+        )
+
+        
+
+
