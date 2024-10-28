@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # eo-core
 A repo for core earth observation research
 
@@ -9,6 +10,8 @@ ROADMAP:
   - eager materialze in cloud run dagster pipes
   - patient mterialize in dataproc dagster pipes
 =======
+=======
+>>>>>>> 34bf31a (rebase REDME)
 <picture>
   <source media="(prefers-color-scheme: dark)" width="800px" srcset="https://github.com/svante-io/eo-flow/raw/main/logo-dark.png">
   <img alt="eoflow logo" width="800px" src="https://github.com/svante-io/eo-flow/raw/main/logo-light.png">
@@ -44,4 +47,18 @@ Materialize, train, and deploy jobs can be dispatched with either *eager* or *pa
 ## Development
 
 &copy; 2024 svante.io
+<<<<<<< HEAD
 >>>>>>> 5a6a59a (feat: marketting and brand updates)
+=======
+=======
+# eo-core
+A repo for core earth observation research
+
+
+ROADMAP:
+- materialize:
+  - local materialize in cloud
+  - eager materialze in cloud run dagster pipes
+  - patient mterialize in dataproc dagster pipes
+>>>>>>> 5fe8b29 (update tmp roadmap)
+>>>>>>> 34bf31a (rebase REDME)
