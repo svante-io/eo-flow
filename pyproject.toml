@@ -35,7 +35,11 @@ dependencies = [
 [project.optional-dependencies] # Optional
 dev = [
     "pytest",
+    "dask",
+    "cloudpathlib",
+    "rasterio",
     "dagster",
+    "xarray",
     "pre-commit",
     "geopandas",
     "dagster-webserver",
