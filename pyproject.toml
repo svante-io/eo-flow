@@ -54,7 +54,8 @@ dev = [
 # ]
 
 gcp = [
-    "google-cloud-bigquery"
+    "google-cloud-bigquery",
+    "google-cloud-storage"
 ]
 
 full = [
