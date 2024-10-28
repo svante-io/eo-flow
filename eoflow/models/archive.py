@@ -1,5 +1,5 @@
-from typing import Optional
 from itertools import chain
+from typing import Optional
 
 import dask
 import dask.array as da
@@ -7,37 +7,44 @@ import geopandas as gpd
 import numpy as np
 import zarr
 from cloudpathlib import AnyPath
+from pydantic import BaseModel
 from rasterio import Affine, features
 from sentinelhub import CRS, UtmZoneSplitter
 from xarray import DataArray as xda
-from pydantic import BaseModel
 
 from eoflow.models.granule import GCPS2Granule
 from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
+
 class ChipStats(BaseModel):
     mean: list[float]
     std: list[float]
+
 
 class Indexbase(BaseModel):
     tile: str
     chip_ii: int
     chip_idx: str
 
+
 class ChipIndex(Indexbase):
     chip_path: str
     chip_stats: ChipStats
 
+
 class TargetIndex(Indexbase):
     target_path: str
-    target_pxcount: dict[int,int]
+    target_pxcount: dict[int, int]
+
 
 class ChipMetaData(ChipIndex, TargetIndex):
     pass
 
+
 class ArchiveIndex(BaseModel):
     tile: str
     chips: list[ChipMetaData]
+
 
 class DataSetIndex(BaseModel):
     chips: list[ChipMetaData]
@@ -323,29 +330,34 @@ class Archive:
         chip_data = self._composite_chip(chip=chip)
         pth = AnyPath(f"{self.cfg.dataset_store}/chips/{self.tile.tile}-{ii}.npz")
         np.savez(pth, chip_data)
-        return ChipIndex({
-            "tile":self.tile.tile,
-            "chip_ii":ii,
-            "chip_idx": self.tile.tile + f"-{ii}",
-            "chip_path":str(pth),
-            "chip_stats":{
-                'mean':np.nanmean(chip_data,axis=(1,2)).tolist(),
-                'std':np.nanstd(chip_data, axis=(1,2)).tolist()
+        return ChipIndex(
+            {
+                "tile": self.tile.tile,
+                "chip_ii": ii,
+                "chip_idx": self.tile.tile + f"-{ii}",
+                "chip_path": str(pth),
+                "chip_stats": {
+                    "mean": np.nanmean(chip_data, axis=(1, 2)).tolist(),
+                    "std": np.nanstd(chip_data, axis=(1, 2)).tolist(),
+                },
             }
-        })
+        )
 
     def _store_target(self, ii: int, chip):
         """store the target data"""
         target_img = self._burn_target(chip)
         pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npz")
         np.savez(pth, target_img)
-        return TargetIndex({
-            "tile":self.tile.tile,
-            "chip_ii":ii,
-            "chip_idx": self.tile.tile + f"-{ii}",
-            "target_path":str(pth),
-            "target_pxcount": dict(zip(val.tolist(), counts.tolist()))
-        })
+        val, counts = np.unique(target_img, return_counts=True)
+        return TargetIndex(
+            {
+                "tile": self.tile.tile,
+                "chip_ii": ii,
+                "chip_idx": self.tile.tile + f"-{ii}",
+                "target_path": str(pth),
+                "target_pxcount": dict(zip(val.tolist(), counts.tolist())),
+            }
+        )
 
     def store_chips_eager(self):
         """store the composite chips"""
@@ -372,16 +384,20 @@ class Archive:
         for ii, (_idx, chip) in enumerate(self.chips.iterrows()):
             yield dask.delayed(self._store_target)(ii, chip)
 
-    def _merge_indices(self, chip_indices: list[ChipIndex], target_indices: list[TargetIndex]) -> ArchiveIndex:
-        chip_index = {c.chip_idx:c for c in chip_indices}
-        target_index = {t.chip_idx:t for t in chip_indices}
+    def _merge_indices(
+        self, chip_indices: list[ChipIndex], target_indices: list[TargetIndex]
+    ) -> ArchiveIndex:
+        chip_index = {c.chip_idx: c for c in chip_indices}
+        target_index = {t.chip_idx: t for t in chip_indices}
 
-        chip_data = [ChipMetaData(chip_index[k].model_dump().update(target_index[k].model_dump())) for k in chip_index.keys()]
+        chip_data = [
+            ChipMetaData(
+                chip_index[k].model_dump().update(target_index[k].model_dump())
+            )
+            for k in chip_index.keys()
+        ]
 
-        return ArchiveIndex(
-            tile=self.tile.tile,
-            chip_data=chip_data
-        )
+        return ArchiveIndex(tile=self.tile.tile, chip_data=chip_data)
 
     def materialize(self):
         """materialize the archive data"""
@@ -399,23 +415,29 @@ class Archive:
     @classmethod
     def merge_archive_indices(cls, indices: list[ArchiveIndex]):
         return DataSetIndex(
-            chips= list(chain.from_iterable([idx.chips for idx in indices])),
-            chip_stats = {
-                'mean':np.nanmean(
-                        np.array([chip.chip_stats.mean for chip in 
-                            list(chain.from_iterable([idx.chips for idx in indices]))]
-                        )
-                        , axis=1
-                    ).tolist(),
-                'std':np.nanmean(
-                    np.array([chip.chip_stats.std for chip in 
-                        list(chain.from_iterable([idx.chips for idx in indices]))]
-                    )
-                    , axis=1
-                )
-            }
+            chips=list(chain.from_iterable([idx.chips for idx in indices])),
+            chip_stats={
+                "mean": np.nanmean(
+                    np.array(
+                        [
+                            chip.chip_stats.mean
+                            for chip in list(
+                                chain.from_iterable([idx.chips for idx in indices])
+                            )
+                        ]
+                    ),
+                    axis=1,
+                ).tolist(),
+                "std": np.nanmean(
+                    np.array(
+                        [
+                            chip.chip_stats.std
+                            for chip in list(
+                                chain.from_iterable([idx.chips for idx in indices])
+                            )
+                        ]
+                    ),
+                    axis=1,
+                ),
+            },
         )
-
-        
-
-

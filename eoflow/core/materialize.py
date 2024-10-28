@@ -19,5 +19,3 @@ def materialize_tile(tile: Tile, revisits: list[S2IndexItem], config: DataSpec):
 
     # composite and materialize, returning the index
     return archive.materialize()
-
-
