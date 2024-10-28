@@ -291,5 +291,6 @@ class S2IndexDF(pa.DataFrameModel):
     # source_url
     # etl_timestamp
 
-    def to_pydantic(self):
-        return [S2IndexItem(**item) for item in self.to_dict(orient="records")]
+
+def S2IndexDFtoItems(df: S2IndexDF):
+    return [S2IndexItem(**item) for item in df.to_dict(orient="records")]

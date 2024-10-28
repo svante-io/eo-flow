@@ -1,5 +1,11 @@
 from eoflow.models.archive import Archive, ArchiveIndex, DataSetIndex
-from eoflow.models.models import DataSpec, S2IndexDF, S2IndexItem, Tile
+from eoflow.models.models import (
+    DataSpec,
+    S2IndexDF,
+    S2IndexDFtoItems,
+    S2IndexItem,
+    Tile,
+)
 
 __all__ = [
     "DataSpec",
@@ -9,4 +15,5 @@ __all__ = [
     "Archive",
     "ArchiveIndex",
     "DataSetIndex",
+    "S2IndexDFtoItems",
 ]

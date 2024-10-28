@@ -67,6 +67,6 @@ def test_archive_store_chips_and_targets(
 
     archive.mask()
 
-    archive.materialize_archive()
+    archive.materialize()
 
     assert True

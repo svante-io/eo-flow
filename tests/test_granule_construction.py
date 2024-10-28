@@ -4,7 +4,6 @@ import zarr
 from eoflow.models.granule import GCPS2Granule
 
 
-# @pytest.mark.skip(reason="expensive test, captured by archive costruction")
 def test_granule_construction(
     sample_dataspec, sample_archive_tile, sample_archive_revisits
 ):

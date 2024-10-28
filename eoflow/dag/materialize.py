@@ -6,7 +6,14 @@ from dagster_pandera import pandera_schema_to_dagster_type
 
 from eoflow.core.catalogue import get_revisits, get_tiles
 from eoflow.core.materialize import materialize_tile
-from eoflow.models import Archive, ArchiveIndex, DataSpec, S2IndexDF, Tile
+from eoflow.models import (
+    Archive,
+    ArchiveIndex,
+    DataSpec,
+    S2IndexDF,
+    S2IndexDFtoItems,
+    Tile,
+)
 
 DagsterS2IndexDF = pandera_schema_to_dagster_type(S2IndexDF)
 
@@ -33,7 +40,7 @@ def op_materialize_tile_run_job(df_revisit_slice: S2IndexDF, config: DataSpec):
 def op_materialize_tile(df_revisit_slice: S2IndexDF, config: DataSpec):
     """Deploy cloud run jobs to materialise the dataset."""
 
-    revisits = df_revisit_slice.to_pydantic()
+    revisits = S2IndexDFtoItems(df_revisit_slice)
     tile = Tile(tile=df_revisit_slice["mgrs_tile"].values[0])
 
     return materialize_tile(tile=tile, revisits=revisits, config=config)
