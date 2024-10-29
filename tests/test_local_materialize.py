@@ -1,3 +1,4 @@
+import pytest
 from dagster import RunConfig
 
 from eoflow.dag.materialize import materialize_local
@@ -22,7 +23,7 @@ def test_materialize_local_basic():
     assert materialize_local.execute_in_process(run_config=RunConfig(run_cfg)).success
 
 
-# @pytest.mark.skip(reason="unfinished.")
+@pytest.mark.skip(reason="expensive.")
 def test_materialize_local_extensive():
     dataspec = DataSpec(
         target_geofile="gs://eo-flow-public/dev/test-data/london_greenspaces.geojson",
