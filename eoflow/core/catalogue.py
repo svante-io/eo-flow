@@ -1,41 +1,76 @@
 import os
 import tempfile
+from functools import reduce
 from typing import List
 
+import fiona
 import geopandas as gpd
 import requests
+from cloudpathlib import AnyPath, GSPath
 from google.cloud import bigquery
 
+from eoflow.core.logging import logger
 from eoflow.models import DataSpec, S2IndexDF, Tile
 
 
-def get_tiles(dataspec: DataSpec) -> list[Tile]:
+def get_tiles(dataspec: DataSpec, logger=logger) -> list[Tile]:
 
     CATALOGUE_BASE_URL = os.getenv(
         "CATALOGUE_BASE_URL", "https://eo-catalogue.svante.io"
     )
     CATALOGUE_API_KEY = os.getenv("CATALOGUE_API_KEY")
-    print("HELO APO KEY", CATALOGUE_API_KEY)
 
     tmp = tempfile.NamedTemporaryFile(suffix=".gpkg")
 
-    # TODO: handle cloud geofile
-    gdf = gpd.read_file(dataspec.target_geofile)
+    input_file = AnyPath(dataspec.target_geofile)
 
-    # TODO: handle too-large geofiles
-    gdf.to_file(tmp.name, driver="gpkg")
+    if isinstance(input_file, GSPath):
 
-    headers = {"x-api-key": CATALOGUE_API_KEY}
+        if input_file.stat().st_size / 1e6 > 100:
+            raise ValueError("Cloud geofile size exceeds maximum allowable: 100mb.")
 
-    r = requests.post(
-        CATALOGUE_BASE_URL + "/mgrs-tiles",
-        files={"file": (tmp.name, open(tmp.name, "rb"))},
-        headers=headers,
+        # is cloudpath
+        with open(input_file, "rb") as f:
+            buffer = f.read()
+
+        with fiona.BytesCollection(buffer) as f:
+            crs = f.crs
+            gdf = gpd.GeoDataFrame.from_features(f, crs=crs)
+
+    else:
+        # is local path
+        gdf = gpd.read_file(str(input_file))
+
+    if len(gdf) > 1000000:
+        raise ValueError("Too many rows in target geofile to use tiling service")
+
+    BATCH = 5000  # toDO move to env var and match catalog service
+
+    tiles = []
+
+    for ii in range(len(gdf) // BATCH + 1):
+
+        logger.info(f"Fetching tiles: {ii + 1}/{len(gdf) // BATCH + 1}")
+
+        gdf.iloc[ii * BATCH : (ii + 1) * BATCH].to_file(tmp.name, driver="gpkg")
+
+        headers = {"x-api-key": CATALOGUE_API_KEY}
+
+        r = requests.post(
+            CATALOGUE_BASE_URL + "/mgrs-tiles",
+            files={"file": (tmp.name, open(tmp.name, "rb"))},
+            headers=headers,
+        )
+
+        r.raise_for_status()
+
+        tiles += [Tile(**item) for item in r.json()["tiles"]]
+
+    unique_tiles = reduce(
+        lambda x, y: x + [y] if (y.tile not in {t.tile for t in x}) else x, tiles, []
     )
 
-    r.raise_for_status()
-
-    return [Tile(**item) for item in r.json()["tiles"]]
+    return unique_tiles
 
 
 def get_revisits(tiles: List[Tile], dataspec: DataSpec) -> S2IndexDF:

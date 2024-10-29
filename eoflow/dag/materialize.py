@@ -1,7 +1,7 @@
 import json
 
 from cloudpathlib import AnyPath
-from dagster import DynamicOut, DynamicOutput, In, Out, graph, op
+from dagster import DynamicOut, DynamicOutput, In, OpExecutionContext, Out, graph, op
 from dagster_pandera import pandera_schema_to_dagster_type
 
 from eoflow.core.catalogue import get_revisits, get_tiles
@@ -19,13 +19,20 @@ DagsterS2IndexDF = pandera_schema_to_dagster_type(S2IndexDF)
 
 
 @op(out=Out())
-def get_tiles_op(config: DataSpec):
-    return get_tiles(config)
+def get_tiles_op(context: OpExecutionContext, config: DataSpec):
+    return get_tiles(config, logger=context.log)
 
 
 @op(ins={"tiles": In(list[Tile])}, out=DynamicOut(dagster_type=DagsterS2IndexDF))
-def dynamic_revisits(tiles: list[Tile], config: DataSpec):
+def dynamic_revisits(context: OpExecutionContext, tiles: list[Tile], config: DataSpec):
+    if len(tiles) > 10:
+        context.log.info(f"got {len(tiles)} tiles")
+    else:
+        context.log.info("Got tiles: {}".format(", ".join(t.tile for t in tiles)))
+
     df_revisits = get_revisits(tiles, config)
+
+    context.log.info(f"Got {len(df_revisits)} revisits for {len(tiles)} tiles")
 
     for mgrs_tile, df_revisit_slice in df_revisits.groupby("mgrs_tile"):
         yield DynamicOutput(df_revisit_slice, mapping_key=mgrs_tile)
@@ -37,13 +44,17 @@ def op_materialize_tile_run_job(df_revisit_slice: S2IndexDF, config: DataSpec):
 
 
 @op(ins={"df_revisit_slice": In(DagsterS2IndexDF)}, out=Out(ArchiveIndex))
-def op_materialize_tile(df_revisit_slice: S2IndexDF, config: DataSpec):
+def op_materialize_tile(
+    context: OpExecutionContext, df_revisit_slice: S2IndexDF, config: DataSpec
+):
     """Deploy cloud run jobs to materialise the dataset."""
 
     revisits = S2IndexDFtoItems(df_revisit_slice)
     tile = Tile(tile=df_revisit_slice["mgrs_tile"].values[0])
 
-    return materialize_tile(tile=tile, revisits=revisits, config=config)
+    return materialize_tile(
+        tile=tile, revisits=revisits, config=config, logger=context.log
+    )
 
 
 @op(ins={"archive_indices": In(list[ArchiveIndex])}, out=Out())
@@ -52,7 +63,12 @@ def op_merge_and_store_dataset_index(
 ):
     merged_index = Archive.merge_archive_indices(archive_indices)
     json.dump(
-        merged_index.model_dump_json(), open(AnyPath(config.store + "/index.json"), "w")
+        json.loads(merged_index.model_dump_json()),
+        open(AnyPath(config.dataset_store + "/index.json"), "w"),
+    )
+    json.dump(
+        json.loads(config.model_dump_json()),
+        open(AnyPath(config.dataset_store + "/dataspec.json"), "w"),
     )
 
 

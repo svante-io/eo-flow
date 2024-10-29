@@ -226,6 +226,7 @@ class Archive:
                 )
                 .ffill(dim="R")
                 .to_numpy()
+                .astype(np.uint16)
             )
 
             return arr[0, :, :, :]
@@ -328,35 +329,31 @@ class Archive:
     def _store_chip(self, ii: int, chip):
         """store the composite chip"""
         chip_data = self._composite_chip(chip=chip)
-        pth = AnyPath(f"{self.cfg.dataset_store}/chips/{self.tile.tile}-{ii}.npz")
-        np.savez(pth, chip_data)
+        pth = AnyPath(f"{self.cfg.dataset_store}/chips/{self.tile.tile}-{ii}.npy")
+        np.save(file=pth, arr=chip_data)
         return ChipIndex(
-            {
-                "tile": self.tile.tile,
-                "chip_ii": ii,
-                "chip_idx": self.tile.tile + f"-{ii}",
-                "chip_path": str(pth),
-                "chip_stats": {
-                    "mean": np.nanmean(chip_data, axis=(1, 2)).tolist(),
-                    "std": np.nanstd(chip_data, axis=(1, 2)).tolist(),
-                },
-            }
+            tile=self.tile.tile,
+            chip_ii=ii,
+            chip_idx=self.tile.tile + f"-{ii}",
+            chip_path=str(pth),
+            chip_stats={
+                "mean": np.nanmean(chip_data, axis=(1, 2)).tolist(),
+                "std": np.nanstd(chip_data, axis=(1, 2)).tolist(),
+            },
         )
 
     def _store_target(self, ii: int, chip):
         """store the target data"""
         target_img = self._burn_target(chip)
-        pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npz")
-        np.savez(pth, target_img)
+        pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npzy")
+        np.save(file=pth, arr=target_img)
         val, counts = np.unique(target_img, return_counts=True)
         return TargetIndex(
-            {
-                "tile": self.tile.tile,
-                "chip_ii": ii,
-                "chip_idx": self.tile.tile + f"-{ii}",
-                "target_path": str(pth),
-                "target_pxcount": dict(zip(val.tolist(), counts.tolist())),
-            }
+            tile=self.tile.tile,
+            chip_ii=ii,
+            chip_idx=self.tile.tile + f"-{ii}",
+            target_path=str(pth),
+            target_pxcount=dict(zip(val.tolist(), counts.tolist())),
         )
 
     def store_chips_eager(self):
@@ -387,17 +384,16 @@ class Archive:
     def _merge_indices(
         self, chip_indices: list[ChipIndex], target_indices: list[TargetIndex]
     ) -> ArchiveIndex:
-        chip_index = {c.chip_idx: c for c in chip_indices}
-        target_index = {t.chip_idx: t for t in chip_indices}
 
-        chip_data = [
-            ChipMetaData(
-                chip_index[k].model_dump().update(target_index[k].model_dump())
-            )
-            for k in chip_index.keys()
-        ]
+        target_index = {t.chip_idx: t.model_dump() for t in target_indices}
+        chip_index = {c.chip_idx: c.model_dump() for c in chip_indices}
 
-        return ArchiveIndex(tile=self.tile.tile, chip_data=chip_data)
+        # merge chip and target data together and cast to ChipMetaData
+        chip_data = {k: {**chip_index[k], **target_index[k]} for k in chip_index.keys()}
+
+        chip_data = [ChipMetaData(**chip_data[k]) for k in chip_data.keys()]
+
+        return ArchiveIndex(tile=self.tile.tile, chips=chip_data)
 
     def materialize(self):
         """materialize the archive data"""
@@ -407,8 +403,8 @@ class Archive:
         store_chip_futures = [fn for fn in self.store_chips()]
         store_target_futures = [fn for fn in self.store_targets()]
 
-        chip_indices = dask.compute(store_chip_futures, num_workers=2)  # fast!
-        target_indices = dask.compute(store_target_futures, num_workers=2)
+        chip_indices = dask.compute(*store_chip_futures, num_workers=4)  # fast!
+        target_indices = dask.compute(*store_target_futures, num_workers=4)
 
         return self._merge_indices(chip_indices, target_indices)
 
