@@ -15,6 +15,7 @@ def get_tiles(dataspec: DataSpec) -> list[Tile]:
         "CATALOGUE_BASE_URL", "https://eo-catalogue.svante.io"
     )
     CATALOGUE_API_KEY = os.getenv("CATALOGUE_API_KEY")
+    print("HELO APO KEY", CATALOGUE_API_KEY)
 
     tmp = tempfile.NamedTemporaryFile(suffix=".gpkg")
 
@@ -51,7 +52,7 @@ def get_revisits(tiles: List[Tile], dataspec: DataSpec) -> S2IndexDF:
     Q = f"""
         SELECT
           {query_columns}
-        FROM `bigquery-public-data.cloud_storage_geo_index.sentinel_2_index`
+        FROM `bigquery-public-data.cloud_storage_geo_index.sentinel_2_sr_index`
         WHERE sensing_time > '{dataspec.start_datetime}'
         AND sensing_time <= '{dataspec.end_datetime}'
         AND mgrs_tile IN ({query_tiles})
