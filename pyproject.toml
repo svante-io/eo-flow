@@ -41,6 +41,7 @@ dev = [
     "dagster",
     "xarray",
     "pre-commit",
+    "bottleneck",
     "geopandas",
     "dagster-webserver",
     "dagster-pandera",
