@@ -5,10 +5,6 @@ from eoflow.models.archive import Archive
 from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
 
-def write_materialized_index(tiles_indices: list[Tile]):
-    pass
-
-
 def materialize_tile(
     tile: Tile, revisits: list[S2IndexItem], config: DataSpec, logger=local_logger
 ):

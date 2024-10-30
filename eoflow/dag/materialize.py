@@ -2,20 +2,19 @@ import json
 
 from cloudpathlib import AnyPath
 from dagster import DynamicOut, DynamicOutput, In, OpExecutionContext, Out, graph, op
-from dagster_pandera import pandera_schema_to_dagster_type
 
+from eoflow.cloud.materialize import op_materialize_tile_eager
 from eoflow.core.catalogue import get_revisits, get_tiles
 from eoflow.core.materialize import materialize_tile
 from eoflow.models import (
     Archive,
     ArchiveIndex,
+    DagsterS2IndexDF,
     DataSpec,
     S2IndexDF,
     S2IndexDFtoItems,
     Tile,
 )
-
-DagsterS2IndexDF = pandera_schema_to_dagster_type(S2IndexDF)
 
 
 @op(out=Out())
@@ -38,16 +37,11 @@ def dynamic_revisits(context: OpExecutionContext, tiles: list[Tile], config: Dat
         yield DynamicOutput(df_revisit_slice, mapping_key=mgrs_tile)
 
 
-@op(ins={"df_revisit_slice": In(DagsterS2IndexDF)}, out=Out())
-def op_materialize_tile_run_job(df_revisit_slice: S2IndexDF, config: DataSpec):
-    """Deploy cloud run jobs to materialise the dataset."""
-
-
 @op(ins={"df_revisit_slice": In(DagsterS2IndexDF)}, out=Out(ArchiveIndex))
-def op_materialize_tile(
+def op_materialize_tile_local(
     context: OpExecutionContext, df_revisit_slice: S2IndexDF, config: DataSpec
 ):
-    """Deploy cloud run jobs to materialise the dataset."""
+    """Deploy local materialisation of the tile."""
 
     revisits = S2IndexDFtoItems(df_revisit_slice)
     tile = Tile(tile=df_revisit_slice["mgrs_tile"].values[0])
@@ -73,17 +67,18 @@ def op_merge_and_store_dataset_index(
 
 
 @graph
-def materialize_dataset():
+def materialize_dataset_eager():
     tiles = get_tiles_op()
     revisits = dynamic_revisits(tiles)
-    revisits.map(op_materialize_tile_run_job)
+    archive_indices = revisits.map(op_materialize_tile_eager)
+    op_merge_and_store_dataset_index(archive_indices.collect())
 
 
 @graph
 def materialize_dataset_local():
     tiles = get_tiles_op()
     revisits = dynamic_revisits(tiles)
-    archive_indices = revisits.map(op_materialize_tile)
+    archive_indices = revisits.map(op_materialize_tile_local)
     op_merge_and_store_dataset_index(archive_indices.collect())
 
 

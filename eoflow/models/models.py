@@ -6,6 +6,7 @@ from typing import Optional, TypeVar, Union
 import pandas as pd
 import pandera as pa
 from dagster import Config
+from dagster_pandera import pandera_schema_to_dagster_type
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from mgrs import MGRS
@@ -294,3 +295,6 @@ class S2IndexDF(pa.DataFrameModel):
 
 def S2IndexDFtoItems(df: S2IndexDF):
     return [S2IndexItem(**item) for item in df.to_dict(orient="records")]
+
+
+DagsterS2IndexDF = pandera_schema_to_dagster_type(S2IndexDF)
