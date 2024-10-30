@@ -26,41 +26,40 @@ classifiers = [  # Optional
 # dependencies are to use eo-flow in client-only mode.
 dependencies = [
     "pydantic",
-    "numpy",
-    "db-dtypes",
-    "mgrs",
     # svante-auth
 ]
 
 [project.optional-dependencies] # Optional
 dev = [
     "pytest",
+    "pre-commit",
+    "pytest-ordering",
+]
+
+core = [
     "dask",
-    "cloudpathlib",
     "rasterio",
     "dagster",
     "xarray",
-    "pre-commit",
     "bottleneck",
     "geopandas",
     "dagster-webserver",
     "dagster-pandera",
-    "pytest-ordering",
     "sentinelhub",
     "zarr",
+    "numpy",
+    "db-dtypes",
+    "mgrs",
 ]
-
-# core = [
-#
-# ]
 
 gcp = [
     "google-cloud-bigquery",
-    "google-cloud-storage"
+    "google-cloud-storage",
+    "cloudpathlib[gs]"
 ]
 
 full = [
-    "eo-flow[dev,gcp]",
+    "eo-flow[dev,core,gcp]",
 ]
 
 [project.urls]  # Optional
