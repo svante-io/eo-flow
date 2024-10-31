@@ -3,15 +3,17 @@ import os
 
 from dagster import AssetExecutionContext, In, Out, op
 
+from eoflow.core import settings
 from eoflow.models import DagsterS2IndexDF, DataSpec, S2IndexDF, S2IndexDFtoItems
 
-if os.getenv("CLOUD") == "GCP":
-    from eoflow.cloud.gcp.materialize import eager, pipes_function_client
+if settings.CLOUD == "gcp":
+    from eoflow.cloud.gcp.pipes import PipesEagerJobClient
 
     @op(ins={"df_revisit_slice": In(DagsterS2IndexDF)}, out=Out())
     def op_materialize_tile_eager(
         context: AssetExecutionContext,
         df_revisit_slice: S2IndexDF,
+        pipes_run_job_client: PipesEagerJobClient,
         config: DataSpec,
     ):
         """Deploy cloud run jobs to materialise the dataset."""
@@ -25,7 +27,7 @@ if os.getenv("CLOUD") == "GCP":
             "dataspec": json.loads(config.model_dump_json),
         }
 
-        return pipes_function_client.run(
+        return pipes_run_job_client.run(
             context=context,
             function_url=os.environ.get(""),
             data=data,
@@ -33,7 +35,7 @@ if os.getenv("CLOUD") == "GCP":
 
 else:
 
-    def eager():
+    def op_materialize_tile_eager():
         raise ValueError(
             "ENV CLOUD={} not supported or not set.".format(os.getenv("CLOUD"))
         )

@@ -1,4 +1,4 @@
-from eoflow.cloud.materialize import eager, op_materialize_tile_eager
+from eoflow.cloud.materialize import op_materialize_tile_eager
 
 __all__ = [
     "eager",

@@ -3,9 +3,9 @@ import os
 from google.cloud import run_v2
 
 from eoflow.cloud.common.pipes import (
+    PipesCloudStorageMessageReader,
     PipesCloudStorageMessageWriter,
-    PipesMappingParamsloader,
-    open_dagster_pipes,
+    PipesEagerJobClient,
 )
 
 # TODO: overwrite GCP specific pipes
@@ -31,7 +31,7 @@ def invoke_cloud_run_job(data):
 
 __all__ = [
     "invoke_cloud_run_job",
-    "open_dagster_pipes",
-    "PipesMappingParamsloader",
     "PipesCloudStorageMessageWriter",
+    "PipesCloudStorageMessageReader",
+    "PipesEagerJobClient",
 ]
