@@ -46,16 +46,20 @@ core = [
     "dagster-webserver",
     "dagster-pandera",
     "sentinelhub",
+    "fiona",
     "zarr",
     "numpy",
     "db-dtypes",
     "mgrs",
+    "pydanic-settings",
+    "httpx"
 ]
 
 gcp = [
     "google-cloud-bigquery",
     "google-cloud-storage",
-    "cloudpathlib[gs]"
+    "cloudpathlib[gs]",
+    "google-cloud-logging",
 ]
 
 full = [
