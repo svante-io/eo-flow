@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker' # build docker image
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/eo-flow-materialize-eager', '-f', './infra/DockerfileMaterialize', '--build-arg','CLOUD=${_CLOUD}', '.']
+  - name: 'gcr.io/cloud-builders/docker' # push docker image
+    args: ['push', 'gcr.io/$PROJECT_ID/eo-flow-materialize-eager']
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk' # redeploy web service
+  #   entrypoint: gcloud
+  #   args: ['run', 'deploy', 'eo-catalogue', '--image', 'gcr.io/$PROJECT_ID/eo-flow-materialize-eager', '--region', 'europe-west2']
+images:
+  - 'gcr.io/$PROJECT_ID/eo-flow-materialize-eager'
+options:
+  logging: CLOUD_LOGGING_ONLY

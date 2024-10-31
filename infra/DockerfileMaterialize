@@ -3,8 +3,8 @@
 FROM python:3.12-slim
 
 # our cloud environment: gcp, aws, azure
-ARG CLOUD
-ENV DATA
+ARG CLOUD="gcp"
+ENV DATA=""
 
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
