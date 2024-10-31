@@ -4,9 +4,12 @@ from typing import List
 
 import dask.array as da
 import numpy as np
+
+# from eoflow.cloud.gcp.utils import download_blob
+from cloudpathlib import AnyPath
 from PIL import Image
 
-from eoflow.cloud.gcp.utils import download_blob
+from eoflow.core import settings
 from eoflow.core.resize import imresize
 from eoflow.models.models import (
     S2_BAND_RESOLUTION,
@@ -78,7 +81,10 @@ class GCPS2Granule:
 
         band_url = self.band_urls[self.bands[block_id[AXIS]]]
 
-        buffer = download_blob(S2_BUCKET, band_url)
+        pth = AnyPath(settings.cloud_prefix + os.path.join(S2_BUCKET, band_url))
+
+        with open(pth, "rb") as f:
+            buffer = f.read()
 
         arr = np.array(Image.open(BytesIO(buffer)))
 

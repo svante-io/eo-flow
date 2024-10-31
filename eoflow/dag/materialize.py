@@ -1,9 +1,14 @@
 import json
 
+import google.cloud.storage
 from cloudpathlib import AnyPath
 from dagster import DynamicOut, DynamicOutput, In, OpExecutionContext, Out, graph, op
 
-from eoflow.cloud.materialize import op_materialize_tile_eager
+from eoflow.cloud.materialize import (
+    PipesCloudStorageMessageReader,
+    PipesEagerJobClient,
+    op_materialize_tile_eager,
+)
 from eoflow.core.catalogue import get_revisits, get_tiles
 from eoflow.core.materialize import materialize_tile
 from eoflow.models import (
@@ -85,4 +90,17 @@ def materialize_dataset_local():
 materialize_local = materialize_dataset_local.to_job(
     name="materialize_dataset_locally",
     description="Materialize dataset locally for development and testing",
+)
+
+materialize_eager = materialize_dataset_eager.to_job(
+    name="materialize_dataset_eager",
+    description="Materialize dataset eagerly for production",
+    resource_defs={
+        "pipes_run_job_client": PipesEagerJobClient(
+            message_reader=PipesCloudStorageMessageReader(
+                bucket="eo-flow-dev/initial_tests",
+                client=google.cloud.storage.Client(),
+            )
+        )
+    },
 )
