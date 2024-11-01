@@ -22,7 +22,7 @@ WORKDIR $APP_HOME
 COPY . ./
 
 # Install production dependencies.
-RUN pip install --no-cache-dir .[core,${CLOUD}]
+RUN pip install --no-cache-dir .[core,${CLOUD}] --timeout 60
 
 # Start service
-CMD python -m eoflow.cloud.materialize:eager $DATA
+CMD python -c "from eoflow.cloud.materialize import eager; eager()" "$DATA"
