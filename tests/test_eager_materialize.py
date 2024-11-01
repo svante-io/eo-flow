@@ -6,11 +6,11 @@ from eoflow.models import DataSpec
 
 def test_materialize_eager_extensive():
     dataspec = DataSpec(
-        target_geofile="gs://eo-flow-public/dev/test-data/london_greenspaces.geojson",
+        target_geofile="gs://eo-flow-public/dev/test-data/parks.geojson",
         dataset_store="gs://eo-flow-dev/initial_tests",
         start_datetime="2024-10-01",
         end_datetime="2024-10-27",
-        bands=["B04", "B03", "B02"],
+        bands=["B01", "B09"],
         chipsize=180,
     )
 
