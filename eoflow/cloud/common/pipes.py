@@ -4,6 +4,7 @@ https://github.com/JasperHG90/dagster-pipes-gcp/blob/main/dagster/dg_pipes.py
 """
 
 import json
+import os
 import random
 import string
 from contextlib import contextmanager
@@ -38,6 +39,7 @@ from dagster_pipes import (  # _assert_opt_env_param_type
     _assert_env_param_type,
     _assert_opt_env_param_type,
 )
+from google.cloud import run_v2
 
 from eoflow.cloud.common.utils import get_execution_logs
 
@@ -45,6 +47,26 @@ from eoflow.cloud.common.utils import get_execution_logs
 
 
 logging_client = google.cloud.logging.Client()
+
+
+def invoke_cloud_run_job(data: dict):
+    """Invoke a cloud run job to materialize a tile"""
+
+    client = run_v2.JobsClient()
+
+    request = run_v2.RunJobRequest(
+        name=os.environ["GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"],
+        overrides=dict(
+            container_overrides=[dict(env=[dict(name="DATA", value=json.dumps(data))])]
+        ),
+    )
+
+    # Make the request
+    operation = client.run_job(request=request)
+
+    response = operation.result()
+
+    return response
 
 
 class PipesCloudStorageMessageWriter(PipesBlobStoreMessageWriter):
@@ -262,7 +284,7 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
     def run(
         self,
         *,
-        function_url: str,
+        function_name: str,
         data: Mapping[str, Any],
         context: OpExecutionContext,
     ):
@@ -301,18 +323,17 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
                 )
 
             response = invoke_cloud_run_job(  # noqa: F821
-                url=function_url,
                 data=payload_data,
             )
 
             context.log.debug(f"Response status code: {response.status_code}")
             if response.status_code != 200:
                 context.log.error(
-                    f"Failed to invoke cloud function {function_url}. Returned status code {response.status_code}."
+                    f"Failed to invoke cloud function {function_name}. Returned status code {response.status_code}."
                 )
                 context.log.error(response.text)
                 raise ValueError(
-                    f"Failed to invoke cloud function {function_url} with status code {response.status_code}"
+                    f"Failed to invoke cloud function {function_name} with status code {response.status_code}"
                 )
 
             context.log.info("Cloud function invoked successfully. Waiting for logs...")

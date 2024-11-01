@@ -19,7 +19,7 @@ def eager():
         message_writer=PipesCloudStorageMessageWriter(client=Client()),
     ) as pipes:
 
-        tile = Tile(tile=pipes.asset_key)
+        tile = Tile(tile=data["tile"])
         revisits = pipes.params["revisits"]
         dataspec = pipes.params["dataspec"]
 
