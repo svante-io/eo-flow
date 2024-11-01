@@ -51,7 +51,7 @@ core = [
     "numpy",
     "db-dtypes",
     "mgrs",
-    "pydanic-settings",
+    "pydantic-settings",
     "httpx"
 ]
 
@@ -60,6 +60,7 @@ gcp = [
     "google-cloud-storage",
     "cloudpathlib[gs]",
     "google-cloud-logging",
+    "google-cloud-run",
 ]
 
 full = [
