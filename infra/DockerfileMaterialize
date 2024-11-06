@@ -4,7 +4,7 @@ FROM python:3.12-slim
 
 # our cloud environment: gcp, aws, azure
 ARG CLOUD="gcp"
-ENV DATA=""
+ENV RUN_STORE=""
 
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
@@ -17,6 +17,7 @@ WORKDIR $APP_HOME
 
 # Install and upgrade pip
 #RUN apt update -y && apt-get install -y python3-pip && pip install --upgrade pip
+RUN apt-get install -y libexpat1
 
 # Copy local code to the container image.
 COPY . ./
@@ -25,4 +26,4 @@ COPY . ./
 RUN pip install --no-cache-dir .[core,${CLOUD}] --timeout 60
 
 # Start service
-CMD python -c "from eoflow.cloud.materialize import eager; eager()" "$DATA"
+CMD python -c "from eoflow.cloud.materialize import eager; eager()"

@@ -57,7 +57,9 @@ def invoke_cloud_run_job(data: dict):
     request = run_v2.RunJobRequest(
         name=os.environ["GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"],
         overrides=dict(
-            container_overrides=[dict(env=[dict(name="DATA", value=json.dumps(data))])]
+            container_overrides=[
+                dict(env=[dict(name=k, value=v) for k, v in data.items()])
+            ]
         ),
     )
 

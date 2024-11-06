@@ -16,7 +16,7 @@ def test_materialize_eager_extensive():
 
     run_cfg = {
         "get_tiles_op": dataspec,
-        "dynamic_revisits": dataspec,
+        "op_revisits": dataspec,
         "op_materialize_tile_eager": dataspec,
         "op_merge_and_store_dataset_index": dataspec,
     }

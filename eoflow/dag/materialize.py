@@ -27,6 +27,20 @@ def get_tiles_op(context: OpExecutionContext, config: DataSpec):
     return get_tiles(config, logger=context.log)
 
 
+@op(ins={"tiles": In(list[Tile])}, out=Out(dagster_type=DagsterS2IndexDF))
+def op_revisits(context: OpExecutionContext, tiles: list[Tile], config: DataSpec):
+    if len(tiles) > 10:
+        context.log.info(f"got {len(tiles)} tiles")
+    else:
+        context.log.info("Got tiles: {}".format(", ".join(t.tile for t in tiles)))
+
+    df_revisits = get_revisits(tiles, config)
+
+    context.log.info(f"Got {len(df_revisits)} revisits for {len(tiles)} tiles")
+
+    return df_revisits
+
+
 @op(ins={"tiles": In(list[Tile])}, out=DynamicOut(dagster_type=DagsterS2IndexDF))
 def dynamic_revisits(context: OpExecutionContext, tiles: list[Tile], config: DataSpec):
     if len(tiles) > 10:
@@ -74,9 +88,9 @@ def op_merge_and_store_dataset_index(
 @graph
 def materialize_dataset_eager():
     tiles = get_tiles_op()
-    revisits = dynamic_revisits(tiles)
-    archive_indices = revisits.map(op_materialize_tile_eager)
-    op_merge_and_store_dataset_index(archive_indices.collect())
+    revisits = op_revisits(tiles)
+    archive_indices = op_materialize_tile_eager(revisits)
+    op_merge_and_store_dataset_index(archive_indices)
 
 
 @graph
