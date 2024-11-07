@@ -17,7 +17,7 @@ WORKDIR $APP_HOME
 
 # Install and upgrade pip
 #RUN apt update -y && apt-get install -y python3-pip && pip install --upgrade pip
-RUN apt-get install -y libexpat1
+RUN apt update -y && apt-get install -y libexpat1
 
 # Copy local code to the container image.
 COPY . ./
