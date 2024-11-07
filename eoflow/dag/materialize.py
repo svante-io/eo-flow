@@ -97,8 +97,7 @@ def op_merge_and_store_dataset_index(
 
 @graph
 def materialize_dataset_eager():
-    tiles = get_tiles_op()
-    tiles = list(set(tiles))  # remove duplicates
+    tiles = get_tiles_op()  # remove duplicates
     revisits = op_revisits(tiles)
     archive_indices = op_materialize_tile_eager(revisits)
     op_merge_and_store_dataset_index(archive_indices)
