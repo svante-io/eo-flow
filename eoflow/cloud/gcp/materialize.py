@@ -47,9 +47,11 @@ def eager():
         pipes.log.info(f"Task index: {os.environ.get('CLOUD_RUN_TASK_INDEX')}")
 
         pipes.log.info(data)
+        pipes.log.info(dir(pipes))
+        pipes.log.info(dir(pipes.params))
 
         tile = Tile(tile=data["tile"])
-        revisits = pipes.params["revisits"]
-        dataspec = pipes.params["dataspec"]
+        revisits = data["revisits"]
+        dataspec = data["dataspec"]
 
         return materialize_tile(tile, revisits, dataspec, logger=pipes.log)
