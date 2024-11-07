@@ -8,7 +8,7 @@ from google.cloud.storage import Client
 
 from eoflow.cloud.gcp.pipes import PipesCloudStorageMessageWriter
 from eoflow.core.materialize import materialize_tile
-from eoflow.models import Tile
+from eoflow.models import S2IndexItem, Tile
 
 
 def eager():
@@ -28,7 +28,7 @@ def eager():
     tile = tiles[int(os.environ.get("CLOUD_RUN_TASK_INDEX"))]
 
     revisits = json.loads(AnyPath(RUN_STORE + "/revisits.json").read_text())
-    revisits = [t for t in revisits if t["mgrs_tile"] == tile]
+    revisits = [S2IndexItem(**t) for t in revisits if t["mgrs_tile"] == tile]
 
     dataspec = json.loads(AnyPath(RUN_STORE + "/dataspec.json").read_text())
 
