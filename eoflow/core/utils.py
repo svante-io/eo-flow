@@ -1,3 +1,5 @@
+import logging
+
 import fiona
 import geopandas as gpd
 from cloudpathlib import AnyPath, CloudPath
@@ -6,6 +8,10 @@ from cloudpathlib import AnyPath, CloudPath
 def read_any_geofile(path: str) -> gpd.GeoDataFrame:
 
     input_file = AnyPath(path)
+
+    print(input_file)
+    logging.info(f"Reading geofile: {input_file}")
+    logging.info(type(input_file))
 
     if isinstance(input_file, CloudPath):
 
