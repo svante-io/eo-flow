@@ -19,7 +19,6 @@ from eoflow.cloud.materialize import (
     PipesEagerJobClient,
     op_materialize_tile_eager,
 )
-from eoflow.core.catalogue import get_revisits, get_tiles
 from eoflow.core.materialize import materialize_tile
 from eoflow.models import (
     Archive,
@@ -30,6 +29,7 @@ from eoflow.models import (
     S2IndexDFtoItems,
     Tile,
 )
+from eoflow.models.catalogue import get_revisits, get_tiles
 
 
 @op(out=Out())

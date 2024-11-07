@@ -12,7 +12,7 @@ from rasterio import Affine, features
 from sentinelhub import CRS, UtmZoneSplitter
 from xarray import DataArray as xda
 
-from eoflow.core.catalogue import read_any_geofile
+from eoflow.core.utils import read_any_geofile
 from eoflow.models.granule import GCPS2Granule
 from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
