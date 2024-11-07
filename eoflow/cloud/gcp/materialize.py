@@ -7,6 +7,7 @@ from google.cloud.storage import Client
 
 from eoflow.cloud.gcp.pipes import PipesCloudStorageMessageWriter
 from eoflow.core.materialize import materialize_tile
+from eoflow.models import Tile
 
 
 def eager():
@@ -35,8 +36,8 @@ def eager():
         message_writer=PipesCloudStorageMessageWriter(client=Client()),
     ) as pipes:
 
-        # tile = Tile(tile=data["tile"])
-        # revisits = pipes.params["revisits"]
-        # dataspec = pipes.params["dataspec"]
+        tile = Tile(tile=data["tile"])
+        revisits = pipes.params["revisits"]
+        dataspec = pipes.params["dataspec"]
 
         return materialize_tile(tile, revisits, dataspec, logger=pipes.log)
