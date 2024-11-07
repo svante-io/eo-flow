@@ -12,6 +12,7 @@ from rasterio import Affine, features
 from sentinelhub import CRS, UtmZoneSplitter
 from xarray import DataArray as xda
 
+from eoflow.core.catalogue import read_any_geofile
 from eoflow.models.granule import GCPS2Granule
 from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
@@ -61,7 +62,7 @@ class Archive:
         )  # most recent last
 
         # retrieve intersecting features
-        gdf = gpd.read_file(cfg.target_geofile)
+        gdf = read_any_geofile(cfg.target_geofile)
         self.gdf = gdf.loc[gdf.intersects(self.tile.geometry.to_shapely())]
 
         self._get_granules()
