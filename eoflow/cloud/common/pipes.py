@@ -5,8 +5,6 @@ https://github.com/JasperHG90/dagster-pipes-gcp/blob/main/dagster/dg_pipes.py
 
 import json
 import os
-import random
-import string
 from contextlib import contextmanager
 from typing import IO, Any, Iterator, Mapping, Optional, Sequence
 
@@ -183,6 +181,7 @@ class PipesCloudStorageMessageReader(PipesBlobStoreMessageReader):
         *,
         interval: float = 10,
         bucket: str,
+        prefix: Optional[str],
         client: google.cloud.storage.Client,
         log_readers: Optional[Sequence[PipesLogReader]] = None,
     ):
@@ -190,14 +189,16 @@ class PipesCloudStorageMessageReader(PipesBlobStoreMessageReader):
             interval=interval,
             log_readers=log_readers,
         )
-        self.key_prefix: Optional[str] = None
+        self.key_prefix: Optional[str] = prefix
         self.bucket = check.str_param(bucket, "bucket")
         self.client = client
 
     @contextmanager
     def get_params(self) -> Iterator[PipesParams]:
-        key_prefix = "".join(random.choices(string.ascii_letters, k=30))  # nosec
-        yield {"bucket": self.bucket, "key_prefix": key_prefix}
+        # key_prefix = context.run.run_id
+
+        # key_prefix = "".join(random.choices(string.ascii_letters, k=30))  # nosec
+        yield {"bucket": self.bucket, "key_prefix": self.key_prefix}
 
     def download_messages_chunk(self, index: int, params: PipesParams) -> Optional[str]:
         key = f"{params['key_prefix']}/{index}.json"

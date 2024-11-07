@@ -2,7 +2,17 @@ import json
 
 import google.cloud.storage
 from cloudpathlib import AnyPath
-from dagster import DynamicOut, DynamicOutput, In, OpExecutionContext, Out, graph, op
+from dagster import (
+    DynamicOut,
+    DynamicOutput,
+    In,
+    InitResourceContext,
+    OpExecutionContext,
+    Out,
+    graph,
+    op,
+    resource,
+)
 
 from eoflow.cloud.materialize import (
     PipesCloudStorageMessageReader,
@@ -106,15 +116,20 @@ materialize_local = materialize_dataset_local.to_job(
     description="Materialize dataset locally for development and testing",
 )
 
+
+@resource
+def pipes_run_job_client(context: InitResourceContext) -> PipesEagerJobClient:
+    return PipesEagerJobClient(
+        message_reader=PipesCloudStorageMessageReader(
+            bucket="eo-flow-dev/initial_tests",
+            prefix=context.run_id,
+            client=google.cloud.storage.Client(),
+        )
+    )
+
+
 materialize_eager = materialize_dataset_eager.to_job(
     name="materialize_dataset_eager",
     description="Materialize dataset eagerly for production",
-    resource_defs={
-        "pipes_run_job_client": PipesEagerJobClient(
-            message_reader=PipesCloudStorageMessageReader(
-                bucket="eo-flow-dev/initial_tests",
-                client=google.cloud.storage.Client(),
-            )
-        )
-    },
+    resource_defs={"pipes_run_job_client": pipes_run_job_client},
 )

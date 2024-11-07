@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from cloudpathlib import AnyPath
 from dagster import In, OpExecutionContext, Out, op
@@ -23,10 +24,18 @@ if settings.CLOUD == "gcp":
     ):
         """Deploy cloud run jobs to materialise the dataset."""
 
-        AnyPath(config.dataset_store + "/tiles.json").write_text(
-            json.dumps(df_revisits["mgrs_tile"].values.tolist())
+        # build the logging store
+        AnyPath(os.path.join(config.dataset_store, context.run.run_id)).mkdir(
+            parents=True, exist_ok=True
         )
-        AnyPath(config.dataset_store + "/revisits.json").write_text(
+        time.sleep(5)  # sleep a few seconds to ensure the directory is created
+
+        AnyPath(
+            os.path.join(config.dataset_store, context.run.run_id, "tiles.json")
+        ).write_text(json.dumps(df_revisits["mgrs_tile"].values.tolist()))
+        AnyPath(
+            os.path.join(config.dataset_store, context.run.run_id, "revisits.json")
+        ).write_text(
             json.dumps(
                 [
                     json.loads(item.model_dump_json())
@@ -34,9 +43,9 @@ if settings.CLOUD == "gcp":
                 ]
             )
         )
-        AnyPath(config.dataset_store + "/dataspec.json").write_text(
-            json.dumps(json.loads(config.model_dump_json()))
-        )
+        AnyPath(
+            os.path.join(config.dataset_store, context.run.run_id, "dataspec.json")
+        ).write_text(json.dumps(json.loads(config.model_dump_json())))
 
         return pipes_run_job_client.run(
             context=context,
