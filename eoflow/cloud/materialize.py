@@ -50,7 +50,7 @@ if settings.CLOUD == "gcp":
         return pipes_run_job_client.run(
             context=context,
             function_name=os.environ.get("GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"),
-            data=dict(RUN_STORE=config.dataset_store),
+            data=dict(RUN_STORE=os.path.join(config.dataset_store, context.run.run_id)),
         ).get_materialize_result()
 
     __all__ = [

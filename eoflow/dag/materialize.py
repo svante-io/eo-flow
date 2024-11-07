@@ -121,8 +121,8 @@ materialize_local = materialize_dataset_local.to_job(
 def pipes_run_job_client(context: InitResourceContext) -> PipesEagerJobClient:
     return PipesEagerJobClient(
         message_reader=PipesCloudStorageMessageReader(
-            bucket="eo-flow-dev/initial_tests",
-            prefix=context.run_id,
+            bucket="eo-flow-dev",
+            prefix="initial_tests/" + context.run_id,
             client=google.cloud.storage.Client(),
         )
     )

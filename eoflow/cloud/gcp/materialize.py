@@ -20,15 +20,17 @@ def eager():
     logging.info(f"RUN_STORE: {RUN_STORE}")
     logging.info(f"Task index: {os.environ.get('CLOUD_RUN_TASK_INDEX')}")
 
-    with open(AnyPath(RUN_STORE + "/tiles.json")) as f:
-        tiles = json.load(f)
-        tile = tiles[int(os.environ.get("CLOUD_RUN_TASK_INDEX"))]
-    with open(AnyPath(RUN_STORE + "/revisits.json")) as f:
-        revisits = json.load(f)
-        revisits = [t for t in revisits if t["tile"] == tile]
+    logging.info(AnyPath(RUN_STORE + "/tiles.json").read_text())
+    logging.info(AnyPath(RUN_STORE + "/revisits.json").read_text())
+    logging.info(AnyPath(RUN_STORE + "/dataspec.json").read_text())
 
-    with open(AnyPath(RUN_STORE + "/dataspec.json")) as f:
-        dataspec = json.load(f)
+    tiles = json.loads(AnyPath(RUN_STORE + "/tiles.json").read_text())
+    tile = tiles[int(os.environ.get("CLOUD_RUN_TASK_INDEX"))]
+
+    revisits = json.loads(AnyPath(RUN_STORE + "/revisits.json").read_text())
+    revisits = [t for t in revisits if t["tile"] == tile]
+
+    dataspec = json.loads(AnyPath(RUN_STORE + "/dataspec.json").read_text())
 
     data = {
         "tile": tile,
