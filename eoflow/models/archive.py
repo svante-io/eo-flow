@@ -331,7 +331,7 @@ class Archive:
         """store the composite chip"""
         chip_data = self._composite_chip(chip=chip)
         pth = AnyPath(f"{self.cfg.dataset_store}/chips/{self.tile.tile}-{ii}.npy")
-        np.save(file=pth, arr=chip_data)
+        pth.write_bytes(chip_data.tobytes())
         return ChipIndex(
             tile=self.tile.tile,
             chip_ii=ii,
@@ -346,8 +346,8 @@ class Archive:
     def _store_target(self, ii: int, chip):
         """store the target data"""
         target_img = self._burn_target(chip)
-        pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npzy")
-        np.save(file=pth, arr=target_img)
+        pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npy")
+        pth.write_bytes(target_img.tobytes())
         val, counts = np.unique(target_img, return_counts=True)
         return TargetIndex(
             tile=self.tile.tile,
