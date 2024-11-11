@@ -155,7 +155,8 @@ class DataSpec(Config):
     def upsample_none(cls, v, values):
         # validate upsample can't be none if np.ndarray or xarray
         if (
-            values["loader_output"] in [LoaderOuputEnum.NDARRAY, LoaderOuputEnum.XARRAY]
+            values.data["loader_output"]
+            in [LoaderOuputEnum.NDARRAY, LoaderOuputEnum.XARRAY]
             and v is None
         ):
             raise ValueError(
