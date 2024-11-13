@@ -55,6 +55,9 @@ def eager():
         revisits = data["revisits"]
         dataspec = data["dataspec"]
 
-        return materialize_tile(
+        idx_blob = materialize_tile(
             tile, revisits, dataspec, logger=pipes.log, run_id=run_id
         )
+
+        pipes.log.info(f"Materialized {tile.tile}")
+        AnyPath(RUN_STORE + f"/{tile.tile}-index.json").write_text(json.dumps(idx_blob))
