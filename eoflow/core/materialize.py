@@ -6,14 +6,20 @@ from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
 
 def materialize_tile(
-    tile: Tile, revisits: list[S2IndexItem], config: DataSpec, logger=local_logger
+    tile: Tile,
+    revisits: list[S2IndexItem],
+    config: DataSpec,
+    logger=local_logger,
+    store_suffix="",
 ):
     """Materialize (i.e. fetch data; mask; composite; and store) a single tile of the dataspec."""
 
     tic = time.time()
 
     logger.info(f"{tile.tile}:{time.time() - tic:.2f} Materializing...")
-    archive = Archive(cfg=config, tile=tile, revisits=revisits)
+    archive = Archive(
+        cfg=config, tile=tile, revisits=revisits, store_suffix=store_suffix
+    )
 
     logger.info(
         f"{tile.tile}:{time.time() - tic:.2f} Built Archive, {len(archive.chips)} chips"

@@ -54,4 +54,6 @@ def eager():
         revisits = data["revisits"]
         dataspec = data["dataspec"]
 
-        return materialize_tile(tile, revisits, dataspec, logger=pipes.log)
+        return materialize_tile(
+            tile, revisits, dataspec, logger=pipes.log, store_suffix=RUN_STORE
+        )

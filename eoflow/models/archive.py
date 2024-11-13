@@ -54,12 +54,20 @@ class DataSetIndex(BaseModel):
 
 class Archive:
 
-    def __init__(self, cfg: DataSpec, tile: Tile, revisits: list[S2IndexItem]):
+    def __init__(
+        self,
+        cfg: DataSpec,
+        tile: Tile,
+        revisits: list[S2IndexItem],
+        store_suffix: str = "",
+    ):
         self.cfg = cfg
         self.tile = tile
         self.revisits = sorted(
             revisits, key=lambda x: x.sensing_time
         )  # most recent last
+
+        self.store = f"{cfg.dataset_store}/{store_suffix}"
 
         # retrieve intersecting features
         gdf = read_any_geofile(cfg.target_geofile)
@@ -87,12 +95,6 @@ class Archive:
 
     def _create_lazy_data_store(self):
         """lazily create the archive for computation from the dask array."""
-
-        # delayeds = []
-        # for ii, granule in self.granules:
-        #     delayeds.append(
-        #         granule.stack.store(z[ii, ...], compute=False, return_stored=False)
-        #     )
 
         self.stack = da.stack(
             [granule.stack for granule in self.granules],
@@ -207,10 +209,6 @@ class Archive:
 
         self._generate_mask()
 
-        # explodes...
-        # rp_mask = np.repeat(self.mask[:,np.newaxis,:,:], len(self.cfg.bands), axis=1)
-        # self.z.set_mask_selection(rp_mask,np.nan)
-
     def _composite_chip(
         self,
         block_id: Optional[tuple[int]] = None,
@@ -314,12 +312,12 @@ class Archive:
 
     def _prep_chip_path(self):
         """prepare the chip path"""
-        root_pth = AnyPath(f"{self.cfg.dataset_store}/chips/")
+        root_pth = AnyPath(f"{self.store}/chips/")
         root_pth.mkdir(parents=True, exist_ok=True)
 
     def _prep_target_path(self):
         """prepare the target path"""
-        root_pth = AnyPath(f"{self.cfg.dataset_store}/targets/")
+        root_pth = AnyPath(f"{self.store}/targets/")
         root_pth.mkdir(parents=True, exist_ok=True)
 
     def prep_archive_paths(self):
@@ -330,7 +328,7 @@ class Archive:
     def _store_chip(self, ii: int, chip):
         """store the composite chip"""
         chip_data = self._composite_chip(chip=chip)
-        pth = AnyPath(f"{self.cfg.dataset_store}/chips/{self.tile.tile}-{ii}.npy")
+        pth = AnyPath(f"{self.store}/chips/{self.tile.tile}-{ii}.npy")
         pth.write_bytes(chip_data.tobytes())
         return ChipIndex(
             tile=self.tile.tile,
@@ -346,7 +344,7 @@ class Archive:
     def _store_target(self, ii: int, chip):
         """store the target data"""
         target_img = self._burn_target(chip)
-        pth = AnyPath(f"{self.cfg.dataset_store}/targets/{self.tile.tile}-{ii}.npy")
+        pth = AnyPath(f"{self.store}/targets/{self.tile.tile}-{ii}.npy")
         pth.write_bytes(target_img.tobytes())
         val, counts = np.unique(target_img, return_counts=True)
         return TargetIndex(
