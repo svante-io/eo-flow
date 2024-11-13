@@ -15,6 +15,7 @@ def eager():
     """the entrypoint for a cloud run job that materializes a single tile"""
 
     RUN_STORE = os.environ["RUN_STORE"]
+    run_id = os.path.split(RUN_STORE)[-1]
 
     # basic logging to cloud logs
     logging.info(f"RUN_STORE: {RUN_STORE}")
@@ -55,5 +56,5 @@ def eager():
         dataspec = data["dataspec"]
 
         return materialize_tile(
-            tile, revisits, dataspec, logger=pipes.log, store_suffix=RUN_STORE
+            tile, revisits, dataspec, logger=pipes.log, run_id=run_id
         )

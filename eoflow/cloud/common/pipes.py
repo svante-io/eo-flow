@@ -329,6 +329,9 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
                 data=payload_data,
             )
 
+            print("response:", response)
+            print(type(response))
+
             context.log.debug(f"Response status code: {response.status_code}")
             if response.status_code != 200:
                 context.log.error(

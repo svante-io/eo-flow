@@ -59,7 +59,7 @@ class Archive:
         cfg: DataSpec,
         tile: Tile,
         revisits: list[S2IndexItem],
-        store_suffix: str = "",
+        run_id: Optional[str] = None,
     ):
         self.cfg = cfg
         self.tile = tile
@@ -67,7 +67,10 @@ class Archive:
             revisits, key=lambda x: x.sensing_time
         )  # most recent last
 
-        self.store = f"{cfg.dataset_store}/{store_suffix}"
+        if run_id is not None:
+            self.store = f"{cfg.dataset_store}/{run_id}"
+        else:
+            self.store = cfg.dataset_store
 
         # retrieve intersecting features
         gdf = read_any_geofile(cfg.target_geofile)

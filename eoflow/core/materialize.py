@@ -10,16 +10,14 @@ def materialize_tile(
     revisits: list[S2IndexItem],
     config: DataSpec,
     logger=local_logger,
-    store_suffix="",
+    run_id=None,
 ):
     """Materialize (i.e. fetch data; mask; composite; and store) a single tile of the dataspec."""
 
     tic = time.time()
 
     logger.info(f"{tile.tile}:{time.time() - tic:.2f} Materializing...")
-    archive = Archive(
-        cfg=config, tile=tile, revisits=revisits, store_suffix=store_suffix
-    )
+    archive = Archive(cfg=config, tile=tile, revisits=revisits, run_id=run_id)
 
     logger.info(
         f"{tile.tile}:{time.time() - tic:.2f} Built Archive, {len(archive.chips)} chips"
