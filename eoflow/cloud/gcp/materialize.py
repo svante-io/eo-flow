@@ -60,4 +60,6 @@ def eager():
         )
 
         pipes.log.info(f"Materialized {tile.tile}")
-        AnyPath(RUN_STORE + f"/{tile.tile}-index.json").write_text(json.dumps(idx_blob))
+        AnyPath(RUN_STORE + f"/{tile.tile}-index.json").write_text(
+            idx_blob.model_dump_json()
+        )
