@@ -1,0 +1,29 @@
+# Use the official lightweight Python image.
+# - geopandas no longer needs GDAL... but does Rasterio?
+FROM python:3.12-slim
+
+# our cloud environment: gcp, aws, azure
+ARG CLOUD="gcp"
+ENV RUN_STORE=""
+
+# Allow statements and log messages to immediately appear in the Knative logs
+ENV PYTHONUNBUFFERED True
+#ENV TZ=Europe/London
+#ENV DEBIAN_FRONTEND=noninteractive
+
+# Setup app dir
+ENV APP_HOME /app
+WORKDIR $APP_HOME
+
+# Install and upgrade pip
+#RUN apt update -y && apt-get install -y python3-pip && pip install --upgrade pip
+RUN apt update -y && apt-get install -y libexpat1
+
+# Copy local code to the container image.
+COPY . ./
+
+# Install production dependencies.
+RUN pip install --no-cache-dir .[core,${CLOUD}] --timeout 60
+
+# Start service
+CMD python -c "from eoflow.cloud.materialize import eager; eager()"
