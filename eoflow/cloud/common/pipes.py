@@ -332,14 +332,16 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
             print("response:", response)
             print(type(response))
 
-            context.log.debug(f"Response status code: {response.status_code}")
-            if response.status_code != 200:
+            success = response.succeeded_count != response.task_count
+
+            context.log.debug(f"Response status: {success}")
+            if not success:
                 context.log.error(
-                    f"Failed to invoke cloud function {function_name}. Returned status code {response.status_code}."
+                    f"Failed to invoke cloud function {function_name}. Returned success {success}."
                 )
-                context.log.error(response.text)
+                context.log.error(response)
                 raise ValueError(
-                    f"Failed to invoke cloud function {function_name} with status code {response.status_code}"
+                    f"Failed to invoke cloud function {function_name} with status code {success}"
                 )
 
             context.log.info("Cloud function invoked successfully. Waiting for logs...")
