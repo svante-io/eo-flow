@@ -8,6 +8,7 @@
 > [!WARNING]
 > EO-Flow is currently under construction.
 
+
 EO-Flow is a platform for end-to-end EO+ML (Earth Observation + Machine Learning).
 EO-Flow aims to be the easiest and most cost-effective way to develop insights from satellite data, unlocking scale: large area, deep temporal, or high-cadence deployments.
 With a low-code client library, and an accessible UI, EO-Flow allows your team to focus on the insight, not on the infrastructure.
@@ -50,7 +51,6 @@ It's just [Dagster](https://dagster.io/)! See the available jobs using the dagst
 ### EO-Flow Client
 
 :construction:
-
 
 
 ### Self-Hosting
