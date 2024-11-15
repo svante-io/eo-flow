@@ -127,6 +127,8 @@ class PipesCloudStorageMessageWriterChannel(PipesBlobStoreMessageWriterChannel):
         self._key_prefix = key_prefix
 
     def upload_messages_chunk(self, payload: IO, index: int) -> None:
+        print("uploadng message")
+        print(payload.read())
         key = (
             f"{self._key_prefix}/{index}.json" if self._key_prefix else f"{index}.json"
         )
