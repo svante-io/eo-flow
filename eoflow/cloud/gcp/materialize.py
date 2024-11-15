@@ -47,6 +47,7 @@ def eager():
             client=Client(),
             bucket=AnyPath(RUN_STORE).bucket,
             prefix=AnyPath(RUN_STORE).cloud_prefix,
+            task_index=TASK_INDEX,
         ),
     ) as pipes:
 
