@@ -34,8 +34,6 @@ from dagster_pipes import (  # _assert_opt_env_param_type
     PipesMessageWriter,
     PipesMessageWriterChannel,
     PipesParams,
-    _assert_env_param_type,
-    _assert_opt_env_param_type,
 )
 from google.cloud import run_v2
 
@@ -80,24 +78,27 @@ class PipesCloudStorageMessageWriter(PipesBlobStoreMessageWriter):
     def __init__(
         self,
         client: google.cloud.storage.Client,
+        bucket: str,
+        prefix: str,
+        task_index: int,
         *,
         interval: float = 10,
     ):
         super().__init__(interval=interval)
         self._client = client
+        self.bucket = bucket
+        self.prefix = prefix
+        self.task_index = task_index
 
     def make_channel(
         self,
         params: PipesParams,
     ) -> "PipesCloudStorageMessageWriterChannel":
-        bucket = _assert_env_param_type(params, "bucket", str, self.__class__)
-        key_prefix = _assert_opt_env_param_type(
-            params, "key_prefix", str, self.__class__
-        )
+
         return PipesCloudStorageMessageWriterChannel(
             client=self._client,
-            bucket=bucket,
-            key_prefix=key_prefix,
+            bucket=self.bucket,
+            key_prefix=self.prefix,
             interval=self.interval,
         )
 
@@ -211,7 +212,7 @@ class PipesCloudStorageMessageReader(PipesBlobStoreMessageReader):
 
     def no_messages_debug_text(self) -> str:
         return (
-            f"Attempted to read messages from GCS bucket {self.bucket}. Expected"
+            f"Attempted to read messages from GCS path {self.bucket}/{self.key_prefix}. Expected"
             " PipesCloudStorageMessageReader to be explicitly passed to open_dagster_pipes in the external"
             " process."
         )

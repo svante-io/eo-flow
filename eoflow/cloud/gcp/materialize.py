@@ -16,10 +16,12 @@ def eager():
 
     RUN_STORE = os.environ["RUN_STORE"]
     run_id = os.path.split(RUN_STORE)[-1]
+    TASK_INDEX = os.environ.get("CLOUD_RUN_TASK_INDEX")
 
     # basic logging to cloud logs
     logging.info(f"RUN_STORE: {RUN_STORE}")
     logging.info(f"Task index: {os.environ.get('CLOUD_RUN_TASK_INDEX')}")
+    logging.info(f"Run ID: {run_id}")
 
     logging.info(AnyPath(RUN_STORE + "/tiles.json").read_text())
     logging.info(AnyPath(RUN_STORE + "/revisits.json").read_text())
@@ -41,11 +43,15 @@ def eager():
 
     with open_dagster_pipes(
         params_loader=PipesMappingParamsLoader(data),
-        message_writer=PipesCloudStorageMessageWriter(client=Client()),
+        message_writer=PipesCloudStorageMessageWriter(
+            client=Client(),
+            bucket=AnyPath(RUN_STORE).bucket,
+            prefix=AnyPath(RUN_STORE).cloud_prefix,
+        ),
     ) as pipes:
 
         pipes.log.info(f"RUN_STORE: {RUN_STORE}")
-        pipes.log.info(f"Task index: {os.environ.get('CLOUD_RUN_TASK_INDEX')}")
+        pipes.log.info(f"Task index: {TASK_INDEX}")
 
         pipes.log.info(data)
         pipes.log.info(dir(pipes))
