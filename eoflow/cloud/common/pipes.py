@@ -331,8 +331,10 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
 
             print("response:", response)
             print(type(response))
+            print(response.succeeded_count, type(response.succeeded_count))
+            print(response.task_count, type(response.task_count))
 
-            success = response.succeeded_count != response.task_count
+            success = int(response.succeeded_count) == int(response.task_count)
 
             context.log.debug(f"Response status: {success}")
             if not success:

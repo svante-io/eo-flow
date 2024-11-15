@@ -63,3 +63,11 @@ def eager():
         AnyPath(RUN_STORE + f"/{tile.tile}-index.json").write_text(
             idx_blob.model_dump_json()
         )
+
+        pipes.report_asset_materialization(
+            metadata={
+                "tile": tile.tile,
+                "index_location": RUN_STORE + f"/{tile.tile}-index.json",
+            },
+        )
+        return 200, "success"
