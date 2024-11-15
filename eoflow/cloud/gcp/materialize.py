@@ -51,6 +51,11 @@ def eager():
         ),
     ) as pipes:
 
+        print("PIPES")
+        print(dir(pipes))
+        print(pipes.log)
+        pipes.report_custom_message(f"staring materaliazation {tile.tile}")
+
         pipes.log.info(f"RUN_STORE: {RUN_STORE}")
         pipes.log.info(f"Task index: {TASK_INDEX}")
 
