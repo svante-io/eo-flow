@@ -5,6 +5,7 @@ import os
 from cloudpathlib import AnyPath
 from dagster_pipes import (
     DAGSTER_PIPES_CONTEXT_ENV_VAR,
+    DAGSTER_PIPES_MESSAGES_ENV_VAR,
     PipesContext,
     PipesMappingParamsLoader,
     encode_param,
@@ -47,8 +48,10 @@ def eager():
         "dataspec": dataspec,
     }
 
+    # move to env vars - point these to the cloud storage files
     ctx = {
         DAGSTER_PIPES_CONTEXT_ENV_VAR: encode_param("true"),
+        DAGSTER_PIPES_MESSAGES_ENV_VAR: encode_param("true"),
     }
 
     with open_dagster_pipes(
