@@ -8,7 +8,6 @@ from dagster_pipes import (
     DAGSTER_PIPES_MESSAGES_ENV_VAR,
     PipesContext,
     PipesMappingParamsLoader,
-    encode_param,
     open_dagster_pipes,
 )
 from google.cloud.storage import Client
@@ -50,8 +49,8 @@ def eager():
 
     # move to env vars - point these to the cloud storage files
     ctx = {
-        DAGSTER_PIPES_CONTEXT_ENV_VAR: encode_param("true"),
-        DAGSTER_PIPES_MESSAGES_ENV_VAR: encode_param("true"),
+        DAGSTER_PIPES_CONTEXT_ENV_VAR: os.environ.get(DAGSTER_PIPES_CONTEXT_ENV_VAR),
+        DAGSTER_PIPES_MESSAGES_ENV_VAR: os.environ.get(DAGSTER_PIPES_MESSAGES_ENV_VAR),
     }
 
     with open_dagster_pipes(
