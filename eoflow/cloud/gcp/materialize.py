@@ -7,6 +7,7 @@ from dagster_pipes import (
     DAGSTER_PIPES_CONTEXT_ENV_VAR,
     PipesContext,
     PipesMappingParamsLoader,
+    encode_param,
     open_dagster_pipes,
 )
 from google.cloud.storage import Client
@@ -44,11 +45,14 @@ def eager():
         "tile": tile,
         "revisits": revisits,
         "dataspec": dataspec,
-        DAGSTER_PIPES_CONTEXT_ENV_VAR: True,
+    }
+
+    ctx = {
+        DAGSTER_PIPES_CONTEXT_ENV_VAR: encode_param("true"),
     }
 
     with open_dagster_pipes(
-        params_loader=PipesMappingParamsLoader(data),
+        params_loader=PipesMappingParamsLoader(ctx),
         message_writer=PipesCloudStorageMessageWriter(
             client=Client(),
             bucket=AnyPath(RUN_STORE).bucket,
