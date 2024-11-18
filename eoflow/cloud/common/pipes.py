@@ -307,6 +307,11 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
             context_injector=self._context_injector,
         ) as session:
 
+            print("SESSONS")
+            print(session)
+            print(dir(session))
+            print(type(session))
+
             if isinstance(
                 self._context_injector, PipesCloudFunctionEventContextInjector
             ):

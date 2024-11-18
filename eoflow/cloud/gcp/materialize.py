@@ -3,7 +3,12 @@ import logging
 import os
 
 from cloudpathlib import AnyPath
-from dagster_pipes import PipesContext, PipesMappingParamsLoader, open_dagster_pipes
+from dagster_pipes import (
+    DAGSTER_PIPES_CONTEXT_ENV_VAR,
+    PipesContext,
+    PipesMappingParamsLoader,
+    open_dagster_pipes,
+)
 from google.cloud.storage import Client
 
 from eoflow.cloud.gcp.pipes import PipesCloudStorageMessageWriter
@@ -39,6 +44,7 @@ def eager():
         "tile": tile,
         "revisits": revisits,
         "dataspec": dataspec,
+        DAGSTER_PIPES_CONTEXT_ENV_VAR: True,
     }
 
     with open_dagster_pipes(
