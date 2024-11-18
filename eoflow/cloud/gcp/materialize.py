@@ -54,7 +54,6 @@ def eager():
         print("PIPES")
         print(dir(pipes))
         print(pipes.log)
-        pipes.report_custom_message(f"staring materaliazation {tile.tile}")
 
         pipes.log.info(f"RUN_STORE: {RUN_STORE}")
         pipes.log.info(f"Task index: {TASK_INDEX}")
@@ -66,6 +65,8 @@ def eager():
         tile = Tile(tile=data["tile"])
         revisits = data["revisits"]
         dataspec = data["dataspec"]
+
+        pipes.report_custom_message(f"staring materaliazation {tile.tile}")
 
         idx_blob = materialize_tile(
             tile, revisits, dataspec, logger=pipes.log, run_id=run_id
