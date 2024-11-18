@@ -47,11 +47,15 @@ if settings.CLOUD == "gcp":
             os.path.join(config.dataset_store, context.run.run_id, "dataspec.json")
         ).write_text(json.dumps(json.loads(config.model_dump_json())))
 
-        return pipes_run_job_client.run(
+        result = pipes_run_job_client.run(
             context=context,
             function_name=os.environ.get("GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"),
             data=dict(RUN_STORE=os.path.join(config.dataset_store, context.run.run_id)),
         ).get_materialize_result()
+
+        print("reSULTS")
+        print(result)
+        return result
 
     __all__ = [
         "PipesCloudStorageMessageReader",

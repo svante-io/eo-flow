@@ -3,7 +3,7 @@ import logging
 import os
 
 from cloudpathlib import AnyPath
-from dagster_pipes import PipesMappingParamsLoader, open_dagster_pipes
+from dagster_pipes import PipesContext, PipesMappingParamsLoader, open_dagster_pipes
 from google.cloud.storage import Client
 
 from eoflow.cloud.gcp.pipes import PipesCloudStorageMessageWriter
@@ -52,8 +52,16 @@ def eager():
     ) as pipes:
 
         print("PIPES")
+        print(pipes)
+        print(type(pipes))
         print(dir(pipes))
         print(pipes.log)
+
+        ctx = PipesContext.get()
+        print("CTX")
+        print(ctx)
+        print(dir(ctx))
+        print(type(ctx))
 
         pipes.log.info(f"RUN_STORE: {RUN_STORE}")
         pipes.log.info(f"Task index: {TASK_INDEX}")
@@ -67,6 +75,8 @@ def eager():
         dataspec = data["dataspec"]
 
         pipes.report_custom_message(f"staring materaliazation {tile.tile}")
+
+        ctx.log.info("Hello I'm the context")
 
         idx_blob = materialize_tile(
             tile, revisits, dataspec, logger=pipes.log, run_id=run_id
