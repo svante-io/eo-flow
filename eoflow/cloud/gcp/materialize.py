@@ -83,6 +83,7 @@ def eager():
         )
 
         pipes.report_asset_materialization(
+            asset_key=f"{tile.tile}",
             metadata={
                 "tile": tile.tile,
                 "index_location": RUN_STORE + f"/{tile.tile}-index.json",

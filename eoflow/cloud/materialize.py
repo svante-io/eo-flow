@@ -32,7 +32,7 @@ if settings.CLOUD == "gcp":
 
         AnyPath(
             os.path.join(config.dataset_store, context.run.run_id, "tiles.json")
-        ).write_text(json.dumps(df_revisits["mgrs_tile"].values.tolist()))
+        ).write_text(json.dumps(df_revisits["mgrs_tile"].unique().tolist()))
         AnyPath(
             os.path.join(config.dataset_store, context.run.run_id, "revisits.json")
         ).write_text(
