@@ -62,22 +62,16 @@ def eager():
         ),
     ) as pipes:
 
-        print("PIPES")
-        print("bucketm", AnyPath(RUN_STORE).bucket)
-        print("prefix", AnyPath(RUN_STORE).blob)
-
+        # transfers logs back to the dagster daemon
         pipes.log.info(f"RUN_STORE: {RUN_STORE}")
         pipes.log.info(f"Task index: {TASK_INDEX}")
-
-        pipes.log.info(data)
+        pipes.log.info("tile: {}".format(data["tile"]))
 
         tile = Tile(tile=data["tile"])
         revisits = data["revisits"]
         dataspec = data["dataspec"]
 
         pipes.report_custom_message(f"staring materaliazation {tile.tile}")
-
-        ctx.log.info("Hello I'm the context")
 
         idx_blob = materialize_tile(
             tile, revisits, dataspec, logger=pipes.log, run_id=run_id
