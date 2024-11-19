@@ -6,7 +6,6 @@ from cloudpathlib import AnyPath
 from dagster_pipes import (
     DAGSTER_PIPES_CONTEXT_ENV_VAR,
     DAGSTER_PIPES_MESSAGES_ENV_VAR,
-    PipesContext,
     PipesMappingParamsLoader,
     open_dagster_pipes,
 )
@@ -58,29 +57,19 @@ def eager():
         message_writer=PipesCloudStorageMessageWriter(
             client=Client(),
             bucket=AnyPath(RUN_STORE).bucket,
-            prefix=AnyPath(RUN_STORE).cloud_prefix,
+            prefix=AnyPath(RUN_STORE).blob,
             task_index=TASK_INDEX,
         ),
     ) as pipes:
 
         print("PIPES")
-        print(pipes)
-        print(type(pipes))
-        print(dir(pipes))
-        print(pipes.log)
-
-        ctx = PipesContext.get()
-        print("CTX")
-        print(ctx)
-        print(dir(ctx))
-        print(type(ctx))
+        print("bucketm", AnyPath(RUN_STORE).bucket)
+        print("prefix", AnyPath(RUN_STORE).blob)
 
         pipes.log.info(f"RUN_STORE: {RUN_STORE}")
         pipes.log.info(f"Task index: {TASK_INDEX}")
 
         pipes.log.info(data)
-        pipes.log.info(dir(pipes))
-        pipes.log.info(dir(pipes.params))
 
         tile = Tile(tile=data["tile"])
         revisits = data["revisits"]
