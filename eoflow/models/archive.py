@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Optional
+from typing import Optional, Union
 
 import dask
 import dask.array as da
@@ -18,8 +18,8 @@ from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
 
 class ChipStats(BaseModel):
-    mean: list[float]
-    std: list[float]
+    mean: list[Union[float, None]]
+    std: list[Union[float, None]]
 
 
 class Indexbase(BaseModel):

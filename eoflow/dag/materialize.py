@@ -7,6 +7,7 @@ from dagster import (
     DynamicOutput,
     In,
     InitResourceContext,
+    Nothing,
     OpExecutionContext,
     Out,
     graph,
@@ -80,7 +81,7 @@ def op_materialize_tile_local(
     )
 
 
-@op(ins={"tiles": In(list[Tile])}, out=Out())
+@op(ins={"tiles": In(list[Tile]), "start": In(Nothing)}, out=Out())
 def op_collect_and_merge_indices(
     context: OpExecutionContext, tiles: list[Tile], config: DataSpec
 ):
@@ -90,7 +91,7 @@ def op_collect_and_merge_indices(
         blob = AnyPath(
             config.dataset_store + f"/{context.run_id}" + f"/{tile.tile}-index.json"
         ).read_text()
-        indices.append(ArchiveIndex(**blob))
+        indices.append(ArchiveIndex(**json.loads(blob)))
 
     merged_index = Archive.merge_archive_indices(indices)
 
@@ -120,8 +121,9 @@ def op_merge_and_store_dataset_index(
 def materialize_dataset_eager():
     tiles = get_tiles_op()  # remove duplicates
     revisits = op_revisits(tiles)
-    op_materialize_tile_eager(revisits)
-    op_collect_and_merge_indices(tiles)
+    start = op_materialize_tile_eager(revisits)
+    # use Nothing to force wait until all tiles are materialized
+    op_collect_and_merge_indices(tiles, start=start)
 
 
 @graph
