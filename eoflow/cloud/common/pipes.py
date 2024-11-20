@@ -45,7 +45,7 @@ from eoflow.cloud.common.utils import get_execution_logs
 logging_client = google.cloud.logging.Client()
 
 
-def invoke_cloud_run_job(data: dict):
+def invoke_cloud_run_job(data: dict, n_tasks: int = 1):
     """Invoke a cloud run job to materialize a tile"""
 
     client = run_v2.JobsClient()
@@ -53,9 +53,10 @@ def invoke_cloud_run_job(data: dict):
     request = run_v2.RunJobRequest(
         name=os.environ["GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"],
         overrides=dict(
+            task_count=n_tasks,
             container_overrides=[
                 dict(env=[dict(name=k, value=v) for k, v in data.items()])
-            ]
+            ],
         ),
     )
 
@@ -293,6 +294,7 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
         *,
         function_name: str,
         data: Mapping[str, Any],
+        n_tasks: int,
         context: OpExecutionContext,
     ):
         """Synchronously invoke a cloud function function, enriched with the pipes protocol.
@@ -336,6 +338,7 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
 
             response = invoke_cloud_run_job(  # noqa: F821
                 data=payload_data,
+                n_tasks=n_tasks,
             )
 
             print("response:", response)
