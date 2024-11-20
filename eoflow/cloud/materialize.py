@@ -52,7 +52,7 @@ if settings.CLOUD == "gcp":
             function_name=os.environ.get("GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"),
             data=dict(RUN_STORE=os.path.join(config.dataset_store, context.run.run_id)),
             n_tasks=len(df_revisits["mgrs_tile"].unique()),
-        ).get_materialize_result()
+        )
 
         print("reSULTS")
         print(result)
