@@ -34,8 +34,6 @@ from dagster_pipes import (  # _assert_opt_env_param_type
     PipesMessageWriter,
     PipesMessageWriterChannel,
     PipesParams,
-    _assert_env_param_type,
-    _assert_opt_env_param_type,
 )
 from google.cloud import run_v2
 
@@ -47,7 +45,7 @@ from eoflow.cloud.common.utils import get_execution_logs
 logging_client = google.cloud.logging.Client()
 
 
-def invoke_cloud_run_job(data: dict):
+def invoke_cloud_run_job(data: dict, n_tasks: int = 1):
     """Invoke a cloud run job to materialize a tile"""
 
     client = run_v2.JobsClient()
@@ -55,9 +53,10 @@ def invoke_cloud_run_job(data: dict):
     request = run_v2.RunJobRequest(
         name=os.environ["GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"],
         overrides=dict(
+            task_count=n_tasks,
             container_overrides=[
                 dict(env=[dict(name=k, value=v) for k, v in data.items()])
-            ]
+            ],
         ),
     )
 
@@ -80,24 +79,27 @@ class PipesCloudStorageMessageWriter(PipesBlobStoreMessageWriter):
     def __init__(
         self,
         client: google.cloud.storage.Client,
+        bucket: str,
+        prefix: str,
+        task_index: int,
         *,
         interval: float = 10,
     ):
         super().__init__(interval=interval)
         self._client = client
+        self.bucket = bucket
+        self.prefix = prefix
+        self.task_index = task_index
 
     def make_channel(
         self,
         params: PipesParams,
     ) -> "PipesCloudStorageMessageWriterChannel":
-        bucket = _assert_env_param_type(params, "bucket", str, self.__class__)
-        key_prefix = _assert_opt_env_param_type(
-            params, "key_prefix", str, self.__class__
-        )
+
         return PipesCloudStorageMessageWriterChannel(
             client=self._client,
-            bucket=bucket,
-            key_prefix=key_prefix,
+            bucket=self.bucket,
+            key_prefix=self.prefix,
             interval=self.interval,
         )
 
@@ -211,7 +213,7 @@ class PipesCloudStorageMessageReader(PipesBlobStoreMessageReader):
 
     def no_messages_debug_text(self) -> str:
         return (
-            f"Attempted to read messages from GCS bucket {self.bucket}. Expected"
+            f"Attempted to read messages from GCS path {self.bucket}/{self.key_prefix}. Expected"
             " PipesCloudStorageMessageReader to be explicitly passed to open_dagster_pipes in the external"
             " process."
         )
@@ -289,6 +291,7 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
         *,
         function_name: str,
         data: Mapping[str, Any],
+        n_tasks: int,
         context: OpExecutionContext,
     ):
         """Synchronously invoke a cloud function function, enriched with the pipes protocol.
@@ -327,12 +330,9 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
 
             response = invoke_cloud_run_job(  # noqa: F821
                 data=payload_data,
+                n_tasks=n_tasks,
             )
-
-            print("response:", response)
-            print(type(response))
-
-            success = response.succeeded_count != response.task_count
+            success = int(response.succeeded_count) == int(response.task_count)
 
             context.log.debug(f"Response status: {success}")
             if not success:

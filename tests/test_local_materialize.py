@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from dagster import RunConfig
 
@@ -6,6 +8,9 @@ from eoflow.models import DataSpec
 
 
 def test_materialize_local_basic():
+
+    if not os.path.exists("data"):
+        os.makedirs("data")
 
     dataspec = DataSpec(
         target_geofile="tests/data/parks.geojson",
@@ -16,7 +21,7 @@ def test_materialize_local_basic():
     run_cfg = {
         "get_tiles_op": dataspec,
         "dynamic_revisits": dataspec,
-        "op_materialize_tile": dataspec,
+        "op_materialize_tile_local": dataspec,
         "op_merge_and_store_dataset_index": dataspec,
     }
 

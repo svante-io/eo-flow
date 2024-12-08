@@ -18,7 +18,7 @@ def test_materialize_eager_extensive():
         "get_tiles_op": dataspec,
         "op_revisits": dataspec,
         "op_materialize_tile_eager": dataspec,
-        "op_merge_and_store_dataset_index": dataspec,
+        "op_collect_and_merge_indices": dataspec,
     }
 
     assert materialize_eager.execute_in_process(run_config=RunConfig(run_cfg)).success

@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Optional
+from typing import Optional, Union
 
 import dask
 import dask.array as da
@@ -7,7 +7,7 @@ import geopandas as gpd
 import numpy as np
 import zarr
 from cloudpathlib import AnyPath
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from rasterio import Affine, features
 from sentinelhub import CRS, UtmZoneSplitter
 from xarray import DataArray as xda
@@ -18,8 +18,15 @@ from eoflow.models.models import DataSpec, S2IndexItem, Tile
 
 
 class ChipStats(BaseModel):
-    mean: list[float]
-    std: list[float]
+    mean: list[Union[float, None]]
+    std: list[Union[float, None]]
+
+    @field_validator("*")
+    @classmethod
+    def none2nan(cls, v):
+        if None in v:
+            return np.array(v).astype(float).tolist()
+        return v
 
 
 class Indexbase(BaseModel):

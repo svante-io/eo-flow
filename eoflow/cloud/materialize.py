@@ -32,7 +32,7 @@ if settings.CLOUD == "gcp":
 
         AnyPath(
             os.path.join(config.dataset_store, context.run.run_id, "tiles.json")
-        ).write_text(json.dumps(df_revisits["mgrs_tile"].values.tolist()))
+        ).write_text(json.dumps(df_revisits["mgrs_tile"].unique().tolist()))
         AnyPath(
             os.path.join(config.dataset_store, context.run.run_id, "revisits.json")
         ).write_text(
@@ -47,11 +47,14 @@ if settings.CLOUD == "gcp":
             os.path.join(config.dataset_store, context.run.run_id, "dataspec.json")
         ).write_text(json.dumps(json.loads(config.model_dump_json())))
 
-        return pipes_run_job_client.run(
+        result = pipes_run_job_client.run(
             context=context,
             function_name=os.environ.get("GCP_MATERIALIZE_EAGER_RUN_JOB_NAME"),
             data=dict(RUN_STORE=os.path.join(config.dataset_store, context.run.run_id)),
-        ).get_materialize_result()
+            n_tasks=len(df_revisits["mgrs_tile"].unique()),
+        )
+
+        return result
 
     __all__ = [
         "PipesCloudStorageMessageReader",
