@@ -54,8 +54,6 @@ if settings.CLOUD == "gcp":
             n_tasks=len(df_revisits["mgrs_tile"].unique()),
         )
 
-        print("reSULTS")
-        print(result)
         return result
 
     __all__ = [

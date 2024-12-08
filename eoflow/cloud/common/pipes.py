@@ -128,12 +128,9 @@ class PipesCloudStorageMessageWriterChannel(PipesBlobStoreMessageWriterChannel):
         self._key_prefix = key_prefix
 
     def upload_messages_chunk(self, payload: IO, index: int) -> None:
-        print("uploadng message")
-        print(payload)
         key = (
             f"{self._key_prefix}/{index}.json" if self._key_prefix else f"{index}.json"
         )
-        print("key", key)
         blob = self._bucket.blob(key)
         blob.upload_from_string(payload.read())
 
@@ -310,11 +307,6 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
             context_injector=self._context_injector,
         ) as session:
 
-            print("SESSONS")
-            print(session)
-            print(dir(session))
-            print(type(session))
-
             if isinstance(
                 self._context_injector, PipesCloudFunctionEventContextInjector
             ):
@@ -340,12 +332,6 @@ class PipesEagerJobClient(PipesClient, TreatAsResourceParam):
                 data=payload_data,
                 n_tasks=n_tasks,
             )
-
-            print("response:", response)
-            print(type(response))
-            print(response.succeeded_count, type(response.succeeded_count))
-            print(response.task_count, type(response.task_count))
-
             success = int(response.succeeded_count) == int(response.task_count)
 
             context.log.debug(f"Response status: {success}")
