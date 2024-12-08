@@ -33,6 +33,7 @@ Materialize, train, and deploy jobs can be dispatched with either *eager* or *pa
 
 |    Job   |      GCP     |      AWS       |        Azure     |
 | -------- | ------------ | -------------- | ---------------- |
+| Register | Eager :o: Patient :o: | Eager :o: Patient :o: |  Eager :o: Patient :o: |
 | Materialize | Eager :white_check_mark: Patient :o:    | Eager :o: Patient :o: |  Eager :o: Patient :o: |
 | Train    | Eager :o: Patient :o: |  Eager :o: Patient :o: |  Eager :o: Patient :o: |
 | Deploy    | Eager :o: Patient :o: |  Eager :o: Patient :o: |  Eager :o: Patient :o: |
