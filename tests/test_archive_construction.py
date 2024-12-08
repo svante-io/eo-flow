@@ -39,7 +39,7 @@ def test_archive_mask_and_composite(
     )
 
     # pseudo-monkey patch, assume the existance of the archive from the test above.
-    archive.z = zarr.open("./local.zarr", "r+")
+    archive.z = zarr.open("./local-30UXC.zarr", "r+")
 
     archive.mask()
 
@@ -63,7 +63,7 @@ def test_archive_store_chips_and_targets(
     )
 
     # pseudo-monkey patch, assume the existance of the archive from the test above.
-    archive.z = zarr.open("./local.zarr", "r+")
+    archive.z = zarr.open("./local-30UXC.zarr", "r+")
 
     archive.mask()
 
