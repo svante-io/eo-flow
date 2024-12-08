@@ -69,7 +69,7 @@ jobs:
 
       - name: Test with pytest for coverage report
         run: |
-          pytest --cov=quickrest --cov-report=json:coverage.json
+          pytest --cov=eoflow --cov-report=json:coverage.json
 
       - name: show coverage report
         id: show_coverage_val
