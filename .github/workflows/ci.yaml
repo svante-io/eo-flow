@@ -5,6 +5,8 @@ name: ci-delint
 on:
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'eoflow/**'
   workflow_dispatch:
 
 permissions:

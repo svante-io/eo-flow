@@ -5,8 +5,17 @@
 
 # EO-Flow: end-to-end Earth Observation DataOps
 
-> [!WARNING]
-> EO-Flow is currently under construction.
+[![License][license badge]][license]
+![Coverage][coverage badge]
+![Status][status badge]
+
+[license badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+[license]: https://opensource.org/licenses/MIT
+
+
+[coverage badge]: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Lkruitwagen/26eb1f55bf4f0791d6a0a70ee0dec834/raw/eoflow-coverage-blob.json
+
+[status badge]: https://img.shields.io/badge/under%20construction-ffae00
 
 
 EO-Flow is a platform for end-to-end EO+ML (Earth Observation + Machine Learning).
@@ -22,8 +31,9 @@ Materialize, train, and deploy jobs can be dispatched with either *eager* or *pa
 
 ## Roadmap & Coverage
 
-- Testing on CI + PyPi listing
+- Testing on CI
 - client library and data service
+- PyPi listing
 - Eager training on GCP
 - Eager deployment on GCP
 - support for COG
